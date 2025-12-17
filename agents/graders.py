@@ -11,10 +11,10 @@ from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events.event import Event
 from google.adk.utils.context_utils import Aclosing
 
-from ..config import GRADER_CONCURRENCY_LIMIT, retry_config
-from ..services.llm_provider import get_agent_generate_config_for, get_model
-from ..models.schemas import CriterionGrade
-from ..utils.text_utils import slugify
+from config import GRADER_CONCURRENCY_LIMIT, retry_config
+from services.llm_provider import get_agent_generate_config_for, get_model
+from models.schemas import CriterionGrade
+from utils.text_utils import slugify
 
 
 _grader_semaphore = asyncio.Semaphore(GRADER_CONCURRENCY_LIMIT)

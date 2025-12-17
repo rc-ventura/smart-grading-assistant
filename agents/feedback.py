@@ -10,9 +10,9 @@ from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events.event import Event
 from google.adk.utils.context_utils import Aclosing
 
-from ..services.llm_provider import get_agent_generate_config_for, get_model
-from ..config import retry_config
-from ..models.schemas import FinalFeedback
+from services.llm_provider import get_agent_generate_config_for, get_model
+from config import retry_config
+from models.schemas import FinalFeedback
 
 
 class EmptyFeedbackOutputError(RuntimeError):

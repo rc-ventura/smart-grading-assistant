@@ -4,10 +4,10 @@ from google.adk.agents import LlmAgent, SequentialAgent
 from google.adk.tools import FunctionTool
 from google.adk.tools.agent_tool import AgentTool
 
-from ..services.llm_provider import get_model, get_agent_generate_config
+from services.llm_provider import get_model, get_agent_generate_config
 from .rubric_validator import rubric_validator_agent
-from ..config import MODEL_LITE, MODEL, retry_config
-from ..tools.save_submission import save_submission
+from config import MODEL_LITE, MODEL, retry_config
+from tools.save_submission import save_submission
 from .graders import parallel_graders
 from .aggregator import aggregator_agent
 from .approval import approval_agent

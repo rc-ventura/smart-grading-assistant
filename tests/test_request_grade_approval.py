@@ -8,7 +8,7 @@ These tests verify:
 
 import asyncio
 
-from capstone.agents.approval import finalize_grade, needs_approval
+from agents.approval import finalize_grade, needs_approval
 
 
 class MockToolContext:

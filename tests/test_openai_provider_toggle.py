@@ -5,7 +5,7 @@ import pytest
 from google.adk.models.google_llm import Gemini
 from google.adk.models.lite_llm import LiteLlm
 
-from capstone.services.llm_provider import get_model
+from services.llm_provider import get_model
 
 
 def test_get_model_defaults_to_gemini(monkeypatch):

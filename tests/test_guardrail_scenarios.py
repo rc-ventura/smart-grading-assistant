@@ -15,9 +15,9 @@ Each test prints clear markers showing when guardrail is invoked.
 
 import asyncio
 import json
-from capstone.tools.validate_rubric import validate_rubric
-from capstone.agent import RubricGuardrailPlugin
-from capstone.agents import build_graders_from_rubric
+from tools.validate_rubric import validate_rubric
+from agent import RubricGuardrailPlugin
+from agents import build_graders_from_rubric
 
 
 
@@ -313,7 +313,7 @@ def test_parallel_graders_dynamic_creation_from_rubric():
     assert "rubric" in tool_ctx.state._data
 
     # Ensure criteria have slugs so build_graders_from_rubric can produce keys
-    from capstone.utils.text_utils import slugify
+    from utils.text_utils import slugify
     rubric_dict = tool_ctx.state._data.get("rubric") or {}
     for crit in rubric_dict.get("criteria", []):
         crit.setdefault("slug", slugify(crit.get("name") or ""))

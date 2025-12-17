@@ -14,13 +14,13 @@ from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from google.genai import types
 
 # Import configuration
-from .config import APP_NAME, USER_ID, DATA_DIR
+from config import APP_NAME, USER_ID, DATA_DIR
 
 # Import agents
-from .agents import root_agent, build_graders_from_rubric
+from agents import root_agent, build_graders_from_rubric
 
 # Import plugins
-from .plugins import RubricGuardrailPlugin
+from plugins import RubricGuardrailPlugin
 
 print("✅ Smart Grading Assistant - Loading...")
 

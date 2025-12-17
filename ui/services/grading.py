@@ -13,7 +13,7 @@ import streamlit as st
 
 # Import ADK components (with fallback for when backend is not available)
 try:
-    from capstone.agent import grading_app, runner
+    from agent import grading_app, runner
     from google.genai import types
     ADK_AVAILABLE = True
 except Exception:

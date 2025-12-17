@@ -2,10 +2,10 @@
 
 from google.adk.agents import LlmAgent
 
-from ..services.llm_provider import get_model, get_agent_generate_config
-from ..config import MODEL_LITE, retry_config
-from ..models.schemas import AggregationResult
-from ..tools.calculate_score import calculate_final_score
+from services.llm_provider import get_model, get_agent_generate_config
+from config import MODEL_LITE, retry_config
+from models.schemas import AggregationResult
+from tools.calculate_score import calculate_final_score
 
 
 aggregator_agent = LlmAgent(

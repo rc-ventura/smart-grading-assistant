@@ -8,7 +8,7 @@ from google.adk.models.google_llm import Gemini
 import google.generativeai as genai
 from google.genai import types
 from google.genai.types import GenerationConfig
-from ..config import (
+from config import (
     MODEL,
     MODEL_LITE,
     retry_config,

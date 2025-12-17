@@ -20,7 +20,7 @@ from typing import Optional, Type
 
 from litellm import completion
 from pydantic import BaseModel, ValidationError
-from ..config import DEFAULT_MODEL
+from config import DEFAULT_MODEL
 
 
 def configure_openai_client(api_key: Optional[str] = None, base_url: Optional[str] = None) -> None:

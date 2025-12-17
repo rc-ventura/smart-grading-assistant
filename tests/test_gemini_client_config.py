@@ -6,14 +6,14 @@ import pytest
 from google.adk.models.google_llm import Gemini
 from google.genai import types
 
-from capstone.services.llm_provider import (
+from services.llm_provider import (
     get_model,
     get_agent_generate_config,
     get_agent_generate_config_for,
     get_ui_model,
 )
-from capstone.config import MODEL, retry_config
-from capstone.agents.graders import create_criterion_grader
+from config import MODEL, retry_config
+from agents.graders import create_criterion_grader
 
 
 @pytest.fixture
@@ -36,7 +36,7 @@ def test_get_model_uses_global_model_and_retry(monkeypatch, dummy_retry_config):
             captured["retry_options"] = retry_options
 
     monkeypatch.setattr(
-        "capstone.services.llm_provider.Gemini",
+        "services.llm_provider.Gemini",
         DummyGemini,
     )
 
@@ -152,7 +152,7 @@ def test_get_ui_model_passes_generation_config(monkeypatch):
             captured["generation_config"] = generation_config
 
     monkeypatch.setattr(
-        "capstone.services.llm_provider.genai.GenerativeModel",
+        "services.llm_provider.genai.GenerativeModel",
         DummyGenerativeModel,
     )
 

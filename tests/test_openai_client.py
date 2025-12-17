@@ -3,7 +3,7 @@ import json
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from capstone.services import openai_client
+from services import openai_client
 
 
 class DummySchema(BaseModel):

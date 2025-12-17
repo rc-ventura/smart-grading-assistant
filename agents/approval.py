@@ -4,8 +4,8 @@ from google.adk.agents import LlmAgent
 from google.adk.tools import FunctionTool
 from google.adk.tools.tool_context import ToolContext
 
-from ..services.llm_provider import get_model, get_agent_generate_config
-from ..config import MODEL_LITE, retry_config
+from services.llm_provider import get_model, get_agent_generate_config
+from config import MODEL_LITE, retry_config
 
 
 def finalize_grade(

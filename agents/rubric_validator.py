@@ -2,9 +2,9 @@
 
 from google.adk.agents import LlmAgent
 
-from ..services.llm_provider import get_model, get_agent_generate_config
-from ..config import MODEL_LITE, retry_config
-from ..tools.validate_rubric import validate_rubric
+from services.llm_provider import get_model, get_agent_generate_config
+from config import MODEL_LITE, retry_config
+from tools.validate_rubric import validate_rubric
 
 
 rubric_validator_agent = LlmAgent(
