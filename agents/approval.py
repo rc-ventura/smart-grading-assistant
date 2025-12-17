@@ -4,7 +4,7 @@ from google.adk.agents import LlmAgent
 from google.adk.tools import FunctionTool
 from google.adk.tools.tool_context import ToolContext
 
-from services.llm_provider import get_model, get_agent_generate_config
+from services.gemini_client import get_model, get_agent_generate_config
 from config import MODEL_LITE, retry_config
 
 
@@ -14,7 +14,6 @@ def finalize_grade(
     percentage: float,
     letter_grade: str,
     reason: str,
-    tool_context: ToolContext | None = None,
 ) -> dict:
     """Finalize and record the grade. Requires human confirmation.
     
@@ -45,23 +44,8 @@ async def needs_approval(
     percentage: float,
     letter_grade: str,
     reason: str,
-    tool_context: ToolContext | None = None,
 ) -> bool:
-    """Returns True if the grade requires human approval."""
-
-    if tool_context is not None:
-        try:
-            aggregation_result = tool_context.state.get("aggregation_result")
-        except Exception:
-            aggregation_result = None
-
-        if isinstance(aggregation_result, dict):
-            if aggregation_result.get("requires_human_approval") is True:
-                return True
-
-            if aggregation_result.get("failed_criteria") or aggregation_result.get("missing_grade_keys"):
-                return True
-
+    """Returns True if the grade requires human approval (< 50% or > 90%)."""
     return percentage < 50 or percentage > 90
 
 

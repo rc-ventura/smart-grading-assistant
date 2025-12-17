@@ -112,6 +112,15 @@ Traditional automation struggles with the nuanced nature of academic evaluation.
 
 ---
 
+## 🧱 Design decisions: structured outputs
+
+- **Antes:** cada CriterionGrader chamava a tool `grade_criterion()` que escrevia dicts em `state`, e o `AggregatorAgent` usava `build_grades_payload` → `calculate_final_score(grades_json)`.
+- **Problema:** às vezes o LLM não chamava a tool e devolvia texto livre, o que quebrava o aggregator e o pipeline sequencial.
+- **Agora:** cada grader usa `output_schema=CriterionGrade` e grava `grade_<slug>` diretamente no `state`. O `AggregatorAgent` chama apenas `calculate_final_score(tool_context)`, que:
+  - lê `grader_output_keys` + `grade_*` do `state`;
+  - agrega total, percentual e nota;
+  - retorna um `AggregationResult` validado por Pydantic.
+- **Resultado:** fluxo mais robusto (sem strings soltas), menos tools desnecessárias e contratos de dados claros entre agentes.
 
 ## 📚 Course Concepts Applied
 
@@ -145,27 +154,6 @@ You can run the Smart Grading Assistant in two ways:
 | 🧪**CLI Demo** | Quick local demo that runs `python agent.py` and prints the grading results in the terminal. |
 | 🌐**ADK Web**  | Full interactive experience inside the ADK Web UI, mirroring the classroom workflow.           |
 
-### Environment variables
-
-Copy `capstone/.env.example` to `capstone/.env` and set:
-
-- **Gemini (default)**
-  - `GOOGLE_API_KEY`
-- **OpenAI (optional)**
-  - `LLM_PROVIDER=openai`
-  - `OPENAI_API_KEY`
-  - `OPENAI_MODEL`
-  - `OPENAI_BASE_URL` (optional)
-- **Tuning (optional)**
-  - `GRADER_CONCURRENCY_LIMIT`
-  - `GRADER_TEMPERATURE`
-  - `GRADER_MAX_OUTPUT_TOKENS`
-  - `FEEDBACK_TEMPERATURE`
-  - `FEEDBACK_MAX_OUTPUT_TOKENS`
-  - `OPENAI_GPT5_MIN_OUTPUT_TOKENS`
-
-If you use GPT-5 models via OpenAI, `OPENAI_GPT5_MIN_OUTPUT_TOKENS` can help avoid failures due to reasoning tokens consuming the output budget.
-
 #### 1. CLI Demo Setup
 
 ```bash
@@ -181,7 +169,7 @@ pip install -r requirements.txt
 
 # Configure environment variables
 cp .env.example .env
-# Edit .env and set GOOGLE_API_KEY=<your key> (or set LLM_PROVIDER=openai + OPENAI_API_KEY)
+# Edit .env and set GOOGLE_API_KEY=<your key>
 
 # Run the demo workflow
 python agent.py
@@ -218,7 +206,7 @@ If you see rubric validation errors instead, verify that the rubric JSON is vali
    ```bash
    pip install -r capstone/requirements.txt
    cp capstone/.env.example capstone/.env  # if you have not done this yet
-   # set GOOGLE_API_KEY (or set LLM_PROVIDER=openai + OPENAI_API_KEY) inside capstone/.env
+   # set GOOGLE_API_KEY inside capstone/.env
    ```
 3. Start ADK Web from the repo root (note: do **not** `cd capstone` for this mode):
 
@@ -371,69 +359,22 @@ capstone/
 
 ---
 
-## 🖥️ Streamlit UI (NEW!)
-
-The Smart Grading Assistant now ships with a Streamlit interface so teachers can upload rubrics, grade submissions, and review feedback without touching the command line.
-
-### Quick Start
-
-```bash
-cd capstone
-streamlit run ui/app.py
-```
-
-### UI Features
-
-- 📋 Rubric upload (file or paste JSON)
-- 📝 Submission upload for `.py`, `.txt`, `.md`
-- 🚀 One-click grading button
-- 📊 Real-time progress indicators (validating → grading → aggregating → feedback)
-- 💬 Detailed results + structured feedback
-- 📥 Export options (download JSON, copy feedback)
-
-### UI Structure
-
-```
-ui/
-├── app.py              # Streamlit entrypoint
-├── components/
-│   ├── sidebar.py      # Rubric & submission setup
-│   ├── chat.py         # Progress + chat-style updates
-│   └── results.py      # Final scores & feedback
-├── services/
-│   └── grading.py      # Bridge to ADK grading pipeline
-└── utils/
-    └── formatters.py   # Formatting helpers
-```
-
-See `specs/1-streamlit-grading-ui/quickstart.md` for detailed usage instructions.
-
----
-
 ## 🗺️ Roadmap
 
 - **Phase 1 – Core Grading (MVP)**
 
   - [X] Implement a multi-agent pipeline to evaluate submissions using rubrics.
   - [X] Validate rubric structure and compute final grades with detailed feedback.
-  - [X] Deliver Streamlit teacher UI (upload → grade → feedback).
-- **Phase 2 – Enhanced UX**
+- **Phase 2 – Rubric Assistant with RAG (next step)**
 
-  - [ ] Rubric preview & inline editing
-  - [ ] Syntax highlighting + line numbers for submissions
-  - [ ] Session history & resume
-  - [ ] Human-in-the-loop approval modal
-- **Phase 3 – Rubric Assistant with RAG**
+  - [ ] Build a RAG-powered *Rubric Assistant* to help teachers create and review rubrics:
+    - Index existing rubrics and successful evaluation examples in a knowledge base.
+    - Use RAG to retrieve relevant rubric excerpts, pedagogical guidance, and sample criteria.
+    - Allow teachers to ask questions such as “how can I improve this criterion?” or “example rubric for a Python project?”.
+- **Phase 3 – UX & Deployment**
 
-  - [ ] Build a RAG-powered *Rubric Assistant* to help teachers create and review rubrics
-  - [ ] Index rubrics/examples in a knowledge base
-  - [ ] Provide rubric improvement suggestions via chat
-- **Phase 4 – Production Deployment**
-
-  - [ ] Authentication (Google OAuth)
-  - [ ] PostgreSQL session storage
-  - [ ] Cloud Run deployment + monitoring
-  - [ ] Analytics dashboard for grading metrics
+  - [ ] Add a Streamlit frontend for uploading rubrics/submissions and reviewing grades + feedback.
+  - [ ] Prepare the project for deployment on Cloud Run / Agent Engine.
 
 ## 🔮 Future Improvements
 
