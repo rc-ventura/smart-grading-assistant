@@ -9,7 +9,7 @@ import pytest
 
 # Ensure repo and capstone roots are on sys.path for `ui.*` imports
 REPO_ROOT = Path(__file__).resolve().parents[2]
-CAPSTONE_ROOT = REPO_ROOT / "capstone"
+CAPSTONE_ROOT = REPO_ROOT
 for p in (str(REPO_ROOT), str(CAPSTONE_ROOT)):
     if p not in sys.path:
         sys.path.insert(0, p)

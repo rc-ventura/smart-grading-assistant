@@ -63,3 +63,4 @@ htmlcov/
 *.sqlite3
 
 # SDD 
+.windsurf
