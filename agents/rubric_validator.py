@@ -1,16 +1,15 @@
 """Rubric Validator Agent - validates rubric structure before grading."""
 
 from google.adk.agents import LlmAgent
+from google.adk.models.google_llm import Gemini
 
-from services.llm_provider import get_model, get_agent_generate_config
 from config import MODEL_LITE, retry_config
 from tools.validate_rubric import validate_rubric
 
 
 rubric_validator_agent = LlmAgent(
     name="RubricValidatorAgent",
-    model=get_model(),
-    generate_content_config=get_agent_generate_config(),
+    model=Gemini(model=MODEL_LITE, retry_options=retry_config),
     description="Validates the structure and completeness of grading rubrics",
     instruction="""You are a rubric validation specialist. Your job is to validate 
     grading rubrics before they are used for evaluation.

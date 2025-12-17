@@ -41,8 +41,8 @@ A multi-agent AI system that:
 │  ┌──────────────────────────────────────┐                       │
 │  │     2. ParallelAgent                  │                       │
 │  │     ┌────────────────────────────┐   │                       │
-│  │     │ CriterionGrader1           │   │ ← CriterionGrade      │
-│  │     │ CriterionGrader2           │   │    (output_schema)    │
+│  │     │ CriterionGrader1           │   │ ← grade_criterion()   │
+│  │     │ CriterionGrader2           │   │                       │
 │  │     │ CriterionGrader3           │   │                       │
 │  │     └────────────────────────────┘   │                       │
 │  └──────────────────────────────────────┘                       │
@@ -67,20 +67,13 @@ A multi-agent AI system that:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## 🧱 Design Notes: structured outputs
-
-- **Versão inicial:** cada CriterionGrader chamava `grade_criterion()` e o `AggregatorAgent` dependia de `build_grades_payload` → `calculate_score(grades_json)`.
-- **Problema:** respostas não estruturadas (texto solto) de alguns graders quebravam o aggregator e tornavam o `SequentialAgent` frágil.
-- **Versão atual:** graders usam `output_schema=CriterionGrade` (Pydantic) e salvam `grade_<slug>` no `state`; o aggregator usa apenas `calculate_final_score(tool_context)` lendo diretamente esses objetos.
-- **Benefício:** menos acoplamento entre agentes, validação forte de JSON e fluxo mais resiliente a erros de chamada de tool.
-
 ## ✅ Course Concepts Covered (6+)
 
 | # | Concept                            | Implementation                                                                           | Points |
 | - | ---------------------------------- | ---------------------------------------------------------------------------------------- | ------ |
 | 1 | **Multi-agent (Sequential)** | Validator → Graders → Aggregator → Feedback                                           | ✓     |
 | 2 | **Multi-agent (Parallel)**   | Multiple criteria evaluated simultaneously                                               | ✓     |
-| 3 | **Custom Tools**             | validate_rubric(), save_submission(), calculate_final_score()                            | ✓     |
+| 3 | **Custom Tools**             | validate_rubric(), grade_criterion(), calculate_score()                                  | ✓     |
 | 4 | **Human-in-the-Loop**        | Approval for edge cases (score < 5 or > 9)                                               | ✓     |
 | 5 | **Sessions & Memory**        | Remember past evaluations for consistency                                                | ✓     |
 | 6 | **Observability**            | LoggingPlugin for audit trail                                                            | ✓     |
