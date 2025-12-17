@@ -1,0 +1,21 @@
+{
+    "name": "Python Code Evaluation Rubric",
+    "description": "Standard rubric for evaluating Python programming assignments",
+    "criteria": [
+        {
+            "name": "Code Quality",
+            "max_score": 30,
+            "description": "Evaluate code readability, naming conventions, proper indentation, and adherence to PEP 8 style guidelines. Check for meaningful variable names, appropriate comments, and clean code structure."
+        },
+        {
+            "name": "Functionality",
+            "max_score": 40,
+            "description": "Evaluate if the code correctly solves the problem. Check for correct logic, proper handling of edge cases, expected input/output behavior, and absence of bugs."
+        },
+        {
+            "name": "Documentation",
+            "max_score": 30,
+            "description": "Evaluate the quality of documentation including docstrings, inline comments explaining complex logic, and overall code explanation. Check if the purpose and usage of functions are clear."
+        }
+    ]
+}

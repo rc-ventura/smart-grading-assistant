@@ -1,0 +1,26 @@
+{
+    "name": "Academic Essay Evaluation Rubric",
+    "description": "Standard rubric for evaluating academic essays and written assignments",
+    "criteria": [
+        {
+            "name": "Thesis and Argumentation",
+            "max_score": 35,
+            "description": "Evaluate the clarity and strength of the thesis statement. Check if arguments are well-developed, logically structured, and effectively support the main claim. Assess the use of evidence and examples."
+        },
+        {
+            "name": "Organization and Structure",
+            "max_score": 25,
+            "description": "Evaluate the overall organization of the essay. Check for clear introduction, body paragraphs with topic sentences, smooth transitions between ideas, and a strong conclusion that synthesizes the argument."
+        },
+        {
+            "name": "Language and Style",
+            "max_score": 25,
+            "description": "Evaluate grammar, spelling, punctuation, and sentence structure. Check for appropriate academic tone, varied sentence patterns, and precise word choice. Assess overall readability and flow."
+        },
+        {
+            "name": "Critical Thinking",
+            "max_score": 15,
+            "description": "Evaluate the depth of analysis and original thinking. Check if the essay goes beyond surface-level discussion, considers multiple perspectives, and demonstrates intellectual engagement with the topic."
+        }
+    ]
+}

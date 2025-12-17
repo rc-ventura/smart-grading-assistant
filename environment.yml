@@ -1,0 +1,14 @@
+name: capstone-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - google-adk
+      - google-genai
+      - python-dotenv
+      - sqlalchemy
+      - streamlit
+      - litellm
