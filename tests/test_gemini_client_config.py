@@ -1,15 +1,13 @@
 import types as py_types
-import os
 
 import pytest
 
 from google.adk.models.google_llm import Gemini
 from google.genai import types
 
-from services.llm_provider import (
+from services.gemini_client import (
     get_model,
     get_agent_generate_config,
-    get_agent_generate_config_for,
     get_ui_model,
 )
 from config import MODEL, retry_config
@@ -25,9 +23,6 @@ def dummy_retry_config():
 def test_get_model_uses_global_model_and_retry(monkeypatch, dummy_retry_config):
     """get_model must build Gemini with MODEL and retry_config globals."""
 
-    # Ensure local env doesn't switch provider to OpenAI during this test.
-    monkeypatch.setenv("LLM_PROVIDER", "gemini")
-
     captured = {}
 
     class DummyGemini:
@@ -36,7 +31,7 @@ def test_get_model_uses_global_model_and_retry(monkeypatch, dummy_retry_config):
             captured["retry_options"] = retry_options
 
     monkeypatch.setattr(
-        "services.llm_provider.Gemini",
+        "capstone.services.gemini_client.Gemini",
         DummyGemini,
     )
 
@@ -82,65 +77,6 @@ def test_get_agent_generate_config_custom_values():
     assert cfg.top_k == 42
 
 
-def test_get_agent_generate_config_for_grader_defaults_to_shared_config(monkeypatch):
-    monkeypatch.setenv("LLM_PROVIDER", "gemini")
-
-    cfg = get_agent_generate_config_for("grader")
-
-    assert isinstance(cfg, types.GenerateContentConfig)
-    assert cfg.temperature == 0.7
-    assert cfg.max_output_tokens == 1024
-
-
-def test_get_agent_generate_config_for_grader_openai_uses_env_overrides(monkeypatch):
-    monkeypatch.setenv("LLM_PROVIDER", "openai")
-    monkeypatch.setenv("OPENAI_MODEL", "gpt-4o-mini")
-    monkeypatch.setenv("GRADER_TEMPERATURE", "0.11")
-    monkeypatch.setenv("GRADER_MAX_OUTPUT_TOKENS", "123")
-
-    cfg = get_agent_generate_config_for("grader")
-
-    assert isinstance(cfg, types.GenerateContentConfig)
-    assert cfg.temperature == pytest.approx(0.11)
-    assert cfg.max_output_tokens == 123
-
-
-def test_get_agent_generate_config_for_grader_openai_gpt5_enforces_min(monkeypatch):
-    monkeypatch.setenv("LLM_PROVIDER", "openai")
-    monkeypatch.setenv("OPENAI_MODEL", "gpt-5-mini")
-    monkeypatch.setenv("GRADER_MAX_OUTPUT_TOKENS", "384")
-    monkeypatch.setenv("OPENAI_GPT5_MIN_OUTPUT_TOKENS", "2048")
-
-    cfg = get_agent_generate_config_for("grader")
-
-    assert isinstance(cfg, types.GenerateContentConfig)
-    assert cfg.max_output_tokens == 2048
-
-
-def test_get_agent_generate_config_for_feedback_gemini_uses_env_overrides(monkeypatch):
-    monkeypatch.setenv("LLM_PROVIDER", "gemini")
-    monkeypatch.setenv("FEEDBACK_TEMPERATURE", "0.6")
-    monkeypatch.setenv("FEEDBACK_MAX_OUTPUT_TOKENS", "1500")
-
-    cfg = get_agent_generate_config_for("feedback")
-
-    assert isinstance(cfg, types.GenerateContentConfig)
-    assert cfg.temperature == pytest.approx(0.6)
-    assert cfg.max_output_tokens == 1500
-
-
-def test_get_agent_generate_config_for_feedback_openai_gpt5_enforces_min(monkeypatch):
-    monkeypatch.setenv("LLM_PROVIDER", "openai")
-    monkeypatch.setenv("OPENAI_MODEL", "gpt-5-mini")
-    monkeypatch.setenv("FEEDBACK_MAX_OUTPUT_TOKENS", "512")
-    monkeypatch.setenv("OPENAI_GPT5_MIN_OUTPUT_TOKENS", "2048")
-
-    cfg = get_agent_generate_config_for("feedback")
-
-    assert isinstance(cfg, types.GenerateContentConfig)
-    assert cfg.max_output_tokens == 2048
-
-
 def test_get_ui_model_passes_generation_config(monkeypatch):
     """get_ui_model must pass temperature/tokens for GenerationConfig."""
 
@@ -152,7 +88,7 @@ def test_get_ui_model_passes_generation_config(monkeypatch):
             captured["generation_config"] = generation_config
 
     monkeypatch.setattr(
-        "services.llm_provider.genai.GenerativeModel",
+        "capstone.services.gemini_client.genai.GenerativeModel",
         DummyGenerativeModel,
     )
 
@@ -175,9 +111,6 @@ def test_get_ui_model_passes_generation_config(monkeypatch):
 
 def test_create_criterion_grader_uses_shared_model_and_config():
     """Grader created must use get_model + get_agent_generate_config."""
-
-    # Ensure local env doesn't switch provider to OpenAI during this test.
-    os.environ["LLM_PROVIDER"] = "gemini"
 
     grader = create_criterion_grader(
         "Code Quality",

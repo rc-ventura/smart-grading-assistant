@@ -11,4 +11,3 @@ dependencies:
       - python-dotenv
       - sqlalchemy
       - streamlit
-      - litellm

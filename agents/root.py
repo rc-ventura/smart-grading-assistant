@@ -4,7 +4,7 @@ from google.adk.agents import LlmAgent, SequentialAgent
 from google.adk.tools import FunctionTool
 from google.adk.tools.agent_tool import AgentTool
 
-from services.llm_provider import get_model, get_agent_generate_config
+from services.gemini_client import get_model, get_agent_generate_config
 from .rubric_validator import rubric_validator_agent
 from config import MODEL_LITE, MODEL, retry_config
 from tools.save_submission import save_submission
@@ -14,20 +14,25 @@ from .approval import approval_agent
 from .feedback import feedback_agent
 
 
-
+# Grading Pipeline: Sequential execution with structured outputs
+# Each agent now uses output_schema to guarantee valid JSON responses
+# This prevents the "string instead of structured data" problem
 grading_pipeline = SequentialAgent(
     name="GradingPipeline",
     description="Executes the grading workflow with structured outputs.",
     sub_agents=[
-        parallel_graders,   
-        aggregator_agent,   
-        approval_agent,     
-        feedback_agent,     
+        parallel_graders,   # Graders use output_schema -> guaranteed JSON
+        aggregator_agent,   # Reads structured grades from state
+        approval_agent,     # Finalizes grade
+        feedback_agent,     # Generates structured feedback
     ],
 )
 
 print("✅ GradingPipeline created (SequentialAgent with structured outputs)")
 
+# Root Agent: hybrid design with better error handling
+# - validate_rubric and save_submission are direct tools (root controls)
+# - GradingPipeline is a sub-agent (transfer_to_agent for real execution)
 root_agent = LlmAgent(
     name="SmartGradingAssistant",
     model=get_model(),
@@ -46,7 +51,7 @@ WORKFLOW:
 1. Ask the user for the RUBRIC (preferably JSON format).
 2. When received, call validate_rubric to check it. If invalid, explain the errors and ask for corrections.
 3. Once rubric is valid, ask the user for the STUDENT SUBMISSION.
-4. When received, call save_submission to store it (call it with no arguments; it reads the submission from the user's message).
+4. When received, call save_submission to store it.
 5. With both rubric valid AND submission saved, use transfer_to_agent("GradingPipeline") to execute the full evaluation.
 6. After the pipeline completes, present the final results.
 
