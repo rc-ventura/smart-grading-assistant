@@ -1,10 +1,10 @@
 """Approval Agent - handles human-in-the-loop for edge case grades."""
 
 from google.adk.agents import LlmAgent
+from google.adk.models.google_llm import Gemini
 from google.adk.tools import FunctionTool
 from google.adk.tools.tool_context import ToolContext
 
-from services.llm_provider import get_model, get_agent_generate_config
 from config import MODEL_LITE, retry_config
 
 
@@ -14,7 +14,6 @@ def finalize_grade(
     percentage: float,
     letter_grade: str,
     reason: str,
-    tool_context: ToolContext | None = None,
 ) -> dict:
     """Finalize and record the grade. Requires human confirmation.
     
@@ -40,35 +39,20 @@ def finalize_grade(
 
 
 async def needs_approval(
-    final_score: float,
-    max_score: float,
-    percentage: float,
-    letter_grade: str,
-    reason: str,
-    tool_context: ToolContext | None = None,
+    final_score: float, 
+    max_score: float, 
+    percentage: float, 
+    letter_grade: str, 
+    reason: str, 
+    tool_context: ToolContext
 ) -> bool:
-    """Returns True if the grade requires human approval."""
-
-    if tool_context is not None:
-        try:
-            aggregation_result = tool_context.state.get("aggregation_result")
-        except Exception:
-            aggregation_result = None
-
-        if isinstance(aggregation_result, dict):
-            if aggregation_result.get("requires_human_approval") is True:
-                return True
-
-            if aggregation_result.get("failed_criteria") or aggregation_result.get("missing_grade_keys"):
-                return True
-
+    """Returns True if the grade requires human approval (< 50% or > 90%)."""
     return percentage < 50 or percentage > 90
 
 
 approval_agent = LlmAgent(
     name="ApprovalAgent",
-    model=get_model(),
-    generate_content_config=get_agent_generate_config(),
+    model=Gemini(model=MODEL_LITE, retry_options=retry_config),
     description="Handles human approval for edge case grades",
     instruction="""You finalize grades. 
     

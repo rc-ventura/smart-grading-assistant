@@ -69,14 +69,14 @@ Traditional automation struggles with the nuanced nature of academic evaluation.
 │  ┌──────────────────────────────────────┐                       │
 │  │     2. ParallelAgent                  │                       │
 │  │     ┌────────────────────────────┐   │                       │
-│  │     │ CriterionGrader1           │   │ ← CriterionGrade      │
-│  │     │ CriterionGrader2           │   │    (output_schema)    │
+│  │     │ CriterionGrader1           │   │ ← grade_criterion()   │
+│  │     │ CriterionGrader2           │   │                       │
 │  │     │ CriterionGrader3           │   │                       │
 │  │     └────────────────────────────┘   │                       │
 │  └──────────────────────────────────────┘                       │
 │                          ↓                                       │
 │  ┌──────────────────────────────────────┐                       │
-│  │     3. AggregatorAgent               │ ← calculate_final_score() │
+│  │     3. AggregatorAgent               │ ← calculate_score()   │
 │  │     Consolidates all grades           │                       │
 │  └──────────────────────────────────────┘                       │
 │                          ↓                                       │
@@ -99,33 +99,31 @@ Traditional automation struggles with the nuanced nature of academic evaluation.
 
 ## ✨ Key Features
 
-| Feature                         | Description                                                                      |
-| ------------------------------- | -------------------------------------------------------------------------------- |
-| 🔍**Rubric Validation**   | Ensures rubrics are complete before evaluation                                   |
-| ⚡**Parallel Grading**    | Multiple criteria evaluated simultaneously                                       |
-| 🧮**Smart Aggregation**   | Calculates final scores with letter grades                                       |
-| 👤**Human Oversight**     | Teacher approval for edge cases                                                  |
-| 💬**Rich Feedback**       | Constructive, actionable student feedback                                        |
-| 💾**Persistent Sessions** | SQLite storage for grading history                                               |
-| 📊**Observability**       | Comprehensive logging for audit trails                                           |
-| 🧠**Context Compaction**  | Built-in ADK context manager summarizes older turns without losing critical info |
+| Feature | Description |
+|---------|-------------|
+| 🔍 **Rubric Validation** | Ensures rubrics are complete before evaluation |
+| ⚡ **Parallel Grading** | Multiple criteria evaluated simultaneously |
+| 🧮 **Smart Aggregation** | Calculates final scores with letter grades |
+| 👤 **Human Oversight** | Teacher approval for edge cases |
+| 💬 **Rich Feedback** | Constructive, actionable student feedback |
+| 💾 **Persistent Sessions** | SQLite storage for grading history |
+| 📊 **Observability** | Comprehensive logging for audit trails |
 
 ---
-
 
 ## 📚 Course Concepts Applied
 
 This capstone demonstrates **6+ key concepts** from the 5-Day AI Agents Intensive Course:
 
-| # | Concept                            | Implementation                                                                  | Course Day |
-| - | ---------------------------------- | ------------------------------------------------------------------------------- | ---------- |
-| 1 | **Multi-agent (Sequential)** | Validator → Graders → Aggregator → Feedback                                  | Day 1      |
-| 2 | **Multi-agent (Parallel)**   | Multiple criteria graders run simultaneously                                    | Day 1      |
-| 3 | **Custom Tools**             | `validate_rubric()`, `save_submission()`, `calculate_final_score()`       | Day 2      |
-| 4 | **Human-in-the-Loop**        | `request_confirmation` for edge case grades                                   | Day 2      |
-| 5 | **Sessions & Memory**        | `DatabaseSessionService` + context-compaction for persistent, trimmed history | Day 3      |
-| 6 | **Observability**            | `LoggingPlugin` for audit trail                                               | Day 4      |
-| 7 | **Gemini Model**             | Powered by Gemini 2.5 Flash-lite                                                | Bonus      |
+| # | Concept | Implementation | Course Day |
+|---|---------|----------------|------------|
+| 1 | **Multi-agent (Sequential)** | Validator → Graders → Aggregator → Feedback | Day 1 |
+| 2 | **Multi-agent (Parallel)** | Multiple criteria graders run simultaneously | Day 1 |
+| 3 | **Custom Tools** | `validate_rubric()`, `grade_criterion()`, `calculate_score()` | Day 2 |
+| 4 | **Human-in-the-Loop** | `request_confirmation` for edge case grades | Day 2 |
+| 5 | **Sessions & Memory** | `DatabaseSessionService` for persistence | Day 3 |
+| 6 | **Observability** | `LoggingPlugin` for audit trail | Day 4 |
+| 7 | **Gemini Model** | Powered by Gemini 2.5 Flash | Bonus |
 
 ---
 
@@ -136,127 +134,96 @@ This capstone demonstrates **6+ key concepts** from the 5-Day AI Agents Intensiv
 - Python 3.10+
 - Google API Key (for Gemini)
 
-### Setup Overview
-
-You can run the Smart Grading Assistant in two ways:
-
-| Mode                 | When to use                                                                                    |
-| -------------------- | ---------------------------------------------------------------------------------------------- |
-| 🧪**CLI Demo** | Quick local demo that runs `python agent.py` and prints the grading results in the terminal. |
-| 🌐**ADK Web**  | Full interactive experience inside the ADK Web UI, mirroring the classroom workflow.           |
-
-### Environment variables
-
-Copy `capstone/.env.example` to `capstone/.env` and set:
-
-- **Gemini (default)**
-  - `GOOGLE_API_KEY`
-- **OpenAI (optional)**
-  - `LLM_PROVIDER=openai`
-  - `OPENAI_API_KEY`
-  - `OPENAI_MODEL`
-  - `OPENAI_BASE_URL` (optional)
-- **Tuning (optional)**
-  - `GRADER_CONCURRENCY_LIMIT`
-  - `GRADER_TEMPERATURE`
-  - `GRADER_MAX_OUTPUT_TOKENS`
-  - `FEEDBACK_TEMPERATURE`
-  - `FEEDBACK_MAX_OUTPUT_TOKENS`
-  - `OPENAI_GPT5_MIN_OUTPUT_TOKENS`
-
-If you use GPT-5 models via OpenAI, `OPENAI_GPT5_MIN_OUTPUT_TOKENS` can help avoid failures due to reasoning tokens consuming the output budget.
-
-#### 1. CLI Demo Setup
+### Setup
 
 ```bash
-# From the repo root
+# Clone the repository
 cd capstone
 
-# Create & activate a virtual environment
+# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Configure environment variables
+# Configure environment
 cp .env.example .env
-# Edit .env and set GOOGLE_API_KEY=<your key> (or set LLM_PROVIDER=openai + OPENAI_API_KEY)
+# Edit .env and add your GOOGLE_API_KEY
+```
 
-# Run the demo workflow
+---
+
+## 📖 Usage
+
+### Basic Usage
+
+```bash
 python agent.py
 ```
 
-This prints the grading pipeline output (rubric validation → grading → aggregation → feedback) directly to your terminal.
+This runs a demo that:
+1. Loads the Python code rubric
+2. Evaluates the sample Fibonacci submission
+3. Displays the grading results
 
-##### Expected CLI Output
+### Programmatic Usage
 
-After running `python agent.py`, you should see a transcript similar to the following (abridged for clarity):
+```python
+import asyncio
+from agent import grade_submission
+
+rubric = {
+    "name": "My Rubric",
+    "criteria": [
+        {"name": "Quality", "max_score": 50, "description": "..."},
+        {"name": "Completeness", "max_score": 50, "description": "..."}
+    ]
+}
+
+submission = "Student's work here..."
+
+result = asyncio.run(grade_submission(submission, rubric))
+print(result)
+```
+
+### Expected Output
 
 ```
 🎓 SMART GRADING ASSISTANT - DEMO
 ============================================================
+
 📋 Rubric: Python Code Evaluation Rubric
 📝 Submission: Fibonacci Calculator
 
+⏳ Starting evaluation...
+
+============================================================
+📊 EVALUATION RESULTS
+============================================================
+
 ✅ Rubric validated: 3 criteria, 100 total points
-📝 Code Quality: 25/30 — Clean recursive implementation...
-📝 Functionality: 35/40 — Correct logic, could optimize...
-📝 Documentation: 28/30 — Good docstrings and comments...
+
+📝 Code Quality: 25/30
+   Clean recursive implementation with good naming conventions...
+
+📝 Functionality: 35/40
+   Correctly calculates Fibonacci numbers, but O(2^n) complexity...
+
+📝 Documentation: 28/30
+   Good docstrings, clear comments explaining the logic...
 
 📊 Final Score: 88/100 (88%) - Grade: B
-💬 Feedback: Great work! Consider memoization for large inputs...
+
+💬 Feedback:
+   Great work on this Fibonacci implementation! Your code is clean
+   and well-documented. Consider using memoization to improve
+   performance for larger inputs...
+
+============================================================
+✅ Session ID: grading_a1b2c3d4
+============================================================
 ```
-
-If you see rubric validation errors instead, verify that the rubric JSON is valid. If graders do not execute, confirm the submission text is loaded correctly.
-
-#### 2. ADK Web Setup (Interactive)
-
-1. Open a terminal **in the repository root** (`ai_agents-course-sdk-google`).
-2. Ensure dependencies are installed (you can reuse the same virtual environment as above):
-
-   ```bash
-   pip install -r capstone/requirements.txt
-   cp capstone/.env.example capstone/.env  # if you have not done this yet
-   # set GOOGLE_API_KEY (or set LLM_PROVIDER=openai + OPENAI_API_KEY) inside capstone/.env
-   ```
-3. Start ADK Web from the repo root (note: do **not** `cd capstone` for this mode):
-
-   ```bash
-   cd ai-agents_course_sk_google
-   ```
-
-   ```bash
-   adk web
-   ```
-
-   The CLI will display a URL such as `http://127.0.0.1:8000`.
-4. In the browser, create a new session for the `capstone` app and follow the assistant’s prompts:
-
-   - **Rubric:** copy a JSON file from `capstone/examples/rubrics/` (e.g., `python_code_rubric.json` or `essay_rubric.json`) and paste it into the chat. The assistant runs `validate_rubric` automatically.
-   - **Submission:** paste one of the sample submissions from `capstone/examples/submissions/` (e.g., `sample_code.py` or `sample_essay.txt`). The assistant stores it via `save_submission`.
-   - Once both are provided, the assistant transfers to the `GradingPipeline`, which triggers the graders, the aggregator, the human-in-the-loop approval tool, and the feedback generator.
-5. Review the results inside the UI. Logs are stored at `capstone/logs/grading_agent.log` if you need to troubleshoot.
-
-Tip: you can replace the sample rubric/submission with your own files to evaluate different scenarios.
-
-##### Expected ADK Web Flow
-
-During a typical session, the Smart Grading Assistant will:
-
-1. **Prompt for the rubric** and, once provided, call the `validate_rubric` tool.
-2. **Confirm rubric validity** (or return structured errors if invalid).
-3. **Ask for the student submission** and call the `save_submission` tool with the pasted text.
-4. **Transfer to `GradingPipeline`**, which triggers the following agents/tools in order:
-   - `ParallelGraders` → each criterion-specific grader returns structured JSON using the `CriterionGrade` output schema.
-   - `AggregatorAgent` → chama apenas `calculate_final_score`, que lê todos os `grade_*` do session state e calcula o resultado final.
-   - `ApprovalAgent` → `finalize_grade` (with human confirmation if <50% or >90%).
-   - `FeedbackGeneratorAgent` → generates the final summary for the student.
-5. **Return final results** summarizing per-criterion scores, overall grade, approval status, and feedback.
-
-If the pipeline stops early, check the Logs tab in ADK Web; it will indicate whether a tool call failed or a guardrail blocked execution.
-
----
 
 ---
 
@@ -264,50 +231,25 @@ If the pipeline stops early, check the Logs tab in ADK Web; it will indicate whe
 
 ```
 capstone/
-├── agent.py                  # App entry point (assembles agents/app)
-├── __init__.py               # Exposes grading_app
-├── agents/                   # Modularized agent definitions
+├── agent.py                    # Main entry point with all agents
+├── tools/
 │   ├── __init__.py
-│   ├── aggregator.py
-│   ├── approval.py
-│   ├── feedback.py
-│   ├── graders.py
-│   ├── root.py
-│   └── rubric_validator.py
-├── config/                   # Settings and constants
-│   ├── __init__.py
-│   └── settings.py
-├── plugins/                  # Custom ADK plugins
-│   ├── __init__.py
-│   └── rubric_guardrail.py
-├── tools/                    # Function tools used by agents
-│   ├── __init__.py
-│   ├── calculate_score.py
-│   ├── grade_criterion.py    # legacy Day 2 example (não usado no pipeline principal)
-│   ├── save_submission.py
-│   └── validate_rubric.py
-├── tests/                    # Pytest suites for tools/workflow
-│   ├── test_calculate_score.py
-│   └── test_request_grade_approval.py
-├── examples/                 # Sample rubrics & submissions
+│   ├── validate_rubric.py      # Rubric validation tool
+│   ├── grade_criterion.py      # Criterion grading tool
+│   └── calculate_score.py      # Score calculation tool
+├── agents/
+│   └── __init__.py
+├── examples/
 │   ├── rubrics/
 │   │   ├── python_code_rubric.json
 │   │   └── essay_rubric.json
 │   └── submissions/
 │       ├── sample_code.py
 │       └── sample_essay.txt
-├── data/                     # SQLite session DB (created at runtime)
-├── logs/                     # grading_agent.log output
-├── utils/
-│   ├── __init__.py
-│   └── text_utils.py
-├── docs/
-│   └── PLAN.md
-├── README.md
-├── requirements.txt
-├── environment.yml
 ├── .env.example
-└── .env (local, not committed)
+├── requirements.txt
+├── PLAN.md                     # Development plan
+└── README.md                   # This file
 ```
 
 ---
@@ -371,69 +313,21 @@ capstone/
 
 ---
 
-## 🖥️ Streamlit UI (NEW!)
-
-The Smart Grading Assistant now ships with a Streamlit interface so teachers can upload rubrics, grade submissions, and review feedback without touching the command line.
-
-### Quick Start
-
-```bash
-cd capstone
-streamlit run ui/app.py
-```
-
-### UI Features
-
-- 📋 Rubric upload (file or paste JSON)
-- 📝 Submission upload for `.py`, `.txt`, `.md`
-- 🚀 One-click grading button
-- 📊 Real-time progress indicators (validating → grading → aggregating → feedback)
-- 💬 Detailed results + structured feedback
-- 📥 Export options (download JSON, copy feedback)
-
-### UI Structure
-
-```
-ui/
-├── app.py              # Streamlit entrypoint
-├── components/
-│   ├── sidebar.py      # Rubric & submission setup
-│   ├── chat.py         # Progress + chat-style updates
-│   └── results.py      # Final scores & feedback
-├── services/
-│   └── grading.py      # Bridge to ADK grading pipeline
-└── utils/
-    └── formatters.py   # Formatting helpers
-```
-
-See `specs/1-streamlit-grading-ui/quickstart.md` for detailed usage instructions.
-
----
-
 ## 🗺️ Roadmap
 
-- **Phase 1 – Core Grading (MVP)**
+- **Phase 1 – Core Grading (MVP)**  
+  - [x] Implementar pipeline multi-agente para avaliação de submissões usando rúbricas.
+  - [x] Validar estrutura de rúbricas e calcular notas finais com feedback detalhado.
 
-  - [X] Implement a multi-agent pipeline to evaluate submissions using rubrics.
-  - [X] Validate rubric structure and compute final grades with detailed feedback.
-  - [X] Deliver Streamlit teacher UI (upload → grade → feedback).
-- **Phase 2 – Enhanced UX**
+- **Phase 2 – Rubric Assistant com RAG (próximo passo)**  
+  - [ ] Criar um *Rubric Assistant* baseado em RAG para apoiar professores na criação e revisão de rúbricas:
+    - Indexar rúbricas existentes e exemplos de avaliações bem-sucedidas em uma base de conhecimento.
+    - Usar RAG para recuperar trechos relevantes de rúbricas, orientações pedagógicas e exemplos de critérios.
+    - Permitir que o professor faça perguntas como "como melhorar este critério?" ou "exemplo de rubrica para projeto de código Python".
 
-  - [ ] Rubric preview & inline editing
-  - [ ] Syntax highlighting + line numbers for submissions
-  - [ ] Session history & resume
-  - [ ] Human-in-the-loop approval modal
-- **Phase 3 – Rubric Assistant with RAG**
-
-  - [ ] Build a RAG-powered *Rubric Assistant* to help teachers create and review rubrics
-  - [ ] Index rubrics/examples in a knowledge base
-  - [ ] Provide rubric improvement suggestions via chat
-- **Phase 4 – Production Deployment**
-
-  - [ ] Authentication (Google OAuth)
-  - [ ] PostgreSQL session storage
-  - [ ] Cloud Run deployment + monitoring
-  - [ ] Analytics dashboard for grading metrics
+- **Phase 3 – UX & Deployment**  
+  - [ ] Adicionar frontend em Streamlit para upload de rúbricas e submissões, visualização de notas e feedback.
+  - [ ] Preparar o projeto para deploy em ambientes como Cloud Run / Agent Engine.
 
 ## 🔮 Future Improvements
 
@@ -443,10 +337,6 @@ See `specs/1-streamlit-grading-ui/quickstart.md` for detailed usage instructions
 - [ ] **Analytics Dashboard**: Track grading patterns and statistics
 - [ ] **Export Options**: PDF reports, CSV exports
 - [ ] **Cloud Deployment**: Deploy on Google Cloud Run
-- [ ] **Multimodal Input Support**: Accept additional file formats (PDF, images, audio) and route them through specialized evaluators.
-- [ ] **Prompt Evaluation & Refinement**: Add evaluation loops for prompts/responses, adjust instructions/output formatting automatically.
-- [ ] **Advanced Guardrails**: Expand input/output guardrails to sanitize user uploads and enforce safe, policy-compliant responses.
-- [ ] **Enhanced Human-in-the-Loop**: Introduce extra checkpoints (e.g., per-criterion approvals or rubric-change confirmations) before finalizing grades.
 
 ---
 
