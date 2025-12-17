@@ -2,7 +2,7 @@
 
 **Component Name:** SmartGradingStreamlitUI
 **Version:** 1.0.0
-**Status:** In Progress (UI + Runner integration implemented; approval flow pending; UX overhaul tracked in `/specs/2-streamlit-grading-ui-v2/`)
+**Status:** In Progress (UI implemented; backend integration currently simulated)
 **Created:** 2025-12-10
 
 ---
@@ -49,10 +49,10 @@ Streamlit-based teacher-facing UI for the Smart Grading Assistant. Connects to a
 
 - [X] Teacher can upload rubric via file upload OR text paste
 - [X] Teacher can upload submission via file upload OR text paste
-- [X] UI displays validation status for rubric (valid/invalid with errors)
-- [X] UI displays submission status (loaded with preview)
-- [X] "Start Grading" button is enabled only when rubric is valid AND submission is loaded
-- [X] Teacher can reset the session and start over
+- [ ] UI displays validation status for rubric (valid/invalid with errors)
+- [ ] UI displays submission status (loaded with preview)
+- [ ] "Start Grading" button is enabled only when rubric is valid AND submission is loaded
+- [ ] Teacher can reset the session and start over
 
 ### 3.2 Scenario: View Grading Progress
 
@@ -62,10 +62,10 @@ Streamlit-based teacher-facing UI for the Smart Grading Assistant. Connects to a
 
 **Acceptance Criteria:**
 
-- [X] UI shows current step indicator (validating → grading → aggregating → feedback)
-- [X] Per-criterion scores appear as each grader completes
-- [X] Final score and letter grade are displayed after aggregation
-- [X] Progress is visible within a few seconds of starting
+- [ ] UI shows current step indicator (validating → grading → aggregating → feedback)
+- [ ] Per-criterion scores appear as each grader completes
+- [ ] Final score and letter grade are displayed after aggregation
+- [ ] Progress is visible within a few seconds of starting
 
 ### 3.3 Scenario: Review Results and Feedback
 
@@ -75,11 +75,11 @@ Streamlit-based teacher-facing UI for the Smart Grading Assistant. Connects to a
 
 **Acceptance Criteria:**
 
-- [X] UI displays per-criterion scores with evaluation notes
-- [X] UI displays final score, percentage, and letter grade
-- [X] Feedback panel shows strengths, areas for improvement, and suggestions
-- [X] Teacher can expand/collapse the feedback panel
-- [X] Teacher can export results as JSON or copy feedback to clipboard
+- [ ] UI displays per-criterion scores with evaluation notes
+- [ ] UI displays final score, percentage, and letter grade
+- [ ] Feedback panel shows strengths, areas for improvement, and suggestions
+- [ ] Teacher can expand/collapse the feedback panel
+- [ ] Teacher can export results as JSON or copy feedback to clipboard
 
 ### 3.4 Scenario: Human-in-the-Loop Approval
 
@@ -163,7 +163,7 @@ Services:
   - session_service: manages ADK sessions (SQLite or DB)
 ```
 
-**Current implementation status:** UI wiring is complete and `ui/services/grading.py` integrates with the real ADK Runner, streaming events into `st.session_state`. UX improvements to event presentation are tracked in `/specs/2-streamlit-grading-ui-v2/`.
+**Current implementation status:** UI wiring is complete; `ui/services/grading.py` is using a simulated pipeline for now. To meet the full integration requirement, replace the simulation with `runner`/`grading_app` calls and stream events into `st.session_state`.
 
 #### 4.3.2 Backend Responsibilities
 
@@ -265,13 +265,6 @@ Services:
 - Progress indicators
 - Results and feedback display
 - Basic error handling
-
-### Phase 1.5: ADK Backend Integration Sprint
-
-- Replace simulation fallback with real ADK Runner event streaming
-- Map Runner events/state deltas into `st.session_state` updates
-- Remove legacy/duplicate state keys and ensure approval flags are consistent
-- Update/extend tests to cover Runner integration and event mapping
 
 ### Phase 2: Enhanced UX & Rubric Management
 

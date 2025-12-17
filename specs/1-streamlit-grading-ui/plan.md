@@ -9,16 +9,14 @@
 
 Build a Streamlit-based teacher-facing UI that connects to the existing ADK grading backend. The UI provides rubric and submission upload, triggers the multi-agent grading pipeline, displays real-time progress, and shows results with feedback. Human-in-the-loop approval is supported for edge cases.
 
-Current status: the Streamlit UI is implemented and the grading service integrates with the real ADK Runner, streaming events into `st.session_state`. Remaining UX improvements are tracked in `/specs/2-streamlit-grading-ui-v2/`.
-
 ---
 
 ## Technical Context
 
 **Language/Version**: Python 3.11  
 **Primary Dependencies**: Streamlit, google-genai, google-adk  
-**Storage**: In-memory sessions (current), with a path to SQLite/PostgreSQL later  
-**Testing**: pytest (existing tests under `capstone/tests/`)  
+**Storage**: SQLite (via ADK DatabaseSessionService), upgradeable to PostgreSQL  
+**Testing**: pytest, Streamlit testing utilities  
 **Target Platform**: Web browser (localhost or deployed)  
 **Project Type**: Web application (Streamlit frontend + ADK backend)  
 **Performance Goals**: < 30 seconds from "Start Grading" to results  
@@ -29,16 +27,12 @@ Current status: the Streamlit UI is implemented and the grading service integrat
 
 ## Constitution Check
 
-*GATE: Constitution found at `.specify/memory/constitution.md`.*
+*GATE: No constitution.md found. Proceeding with standard best practices.*
 
 - ✅ No unnecessary complexity introduced
 - ✅ Single responsibility: UI handles display, backend handles grading
 - ✅ Existing patterns reused (ADK Runner, session service)
 - ✅ No new external dependencies beyond Streamlit
-
-Notes:
-- UX polish, improved streaming presentation, and regrade reliability are tracked as UI v2 work.
-- Critical flows (Runner wiring + event → UI mapping) must have pytest coverage.
 
 ---
 
@@ -75,9 +69,11 @@ ui/
     └── formatters.py         # Formatting helpers for scores, feedback
 
 tests/
-├── test_ui_grading.py
-├── test_calculate_score.py
-└── ...
+└── ui/
+    ├── test_sidebar.py
+    ├── test_chat.py
+    ├── test_results.py
+    └── test_grading_service.py
 ```
 
 **Structure Decision**: Modular Streamlit app with components split by responsibility. Services layer bridges UI to existing ADK backend without duplicating logic.
@@ -127,47 +123,6 @@ tests/
 | Feedback expander | Expandable panel with full feedback | Strengths, improvements, suggestions |
 | Export JSON | Download results as JSON file | Valid JSON with all data |
 | Copy feedback | Copy feedback text to clipboard | One-click copy |
-
----
-
-## Phase 1.5: ADK Backend Integration Sprint
-
-Goal: completed — stream real Runner events into the existing UI without changing UX.
-
-### 1.5.1 Runner Wiring (Session + Message Types)
-
-- Ensure `ADK_AVAILABLE` is true when the backend is importable (fix any stale imports in `ui/services/grading.py`).
-- Ensure `runner.run_async(...)` is called with the correct message type (`google.genai.types.Content`).
-- Ensure session creation/resume is handled consistently (single `grading_session_id` per UI run).
-
-### 1.5.2 Event Mapping (Runner → UI State)
-
-- Implement `_map_runner_event(...)` to translate ADK `Event` objects into UI-friendly events:
-  - step start/complete transitions
-  - per-criterion grade updates
-  - aggregation result updates (final_score)
-  - feedback updates
-  - errors (including per-criterion failures)
-  - tool confirmations (pending approval)
-- Ensure `st.session_state` updates are derived from Runner event state deltas (backend remains canonical).
-
-### 1.5.3 UI Consumption (No UX Changes)
-
-- Keep `ui/app.py` behavior the same (chat messages, progress indicator, results panel), but ensure it can consume the real mapped events.
-
-### 1.5.4 Cleanup (After Runner Is Stable)
-
-- Remove `_simulate_grading` and the simulation fallback path.
-- Remove duplicate approval flag keys (standardize on `requires_human_approval`).
-- Remove legacy or unused code that only exists to satisfy tests (as long as tests remain meaningful).
-
-### 1.5.5 Tests
-
-- Update `capstone/tests/test_ui_grading.py` to stop depending on the simulation flow.
-- Add/adjust tests to validate:
-  - Runner message typing (Content)
-  - mapping of `state_delta` keys into `st.session_state`
-  - tool confirmation → `pending_approval` behavior
 
 ---
 
@@ -223,6 +178,6 @@ Goal: completed — stream real Runner events into the existing UI without chang
 
 ## Next Steps
 
-1. Implement UX overhaul and stability fixes in `/specs/2-streamlit-grading-ui-v2/`
-2. Implement approval modal/flow (migrated from the integration sprint)
-3. Add/strengthen tests as needed (unit + optional automated E2E)
+1. Run `/speckit.tasks` to generate detailed task breakdown
+2. Implement Phase 1 components in order: sidebar → services → chat → results
+3. Test each component before integration

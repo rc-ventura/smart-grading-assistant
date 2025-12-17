@@ -52,7 +52,7 @@ def get_model():
 
         model_name = (os.getenv("OPENAI_MODEL") or "").strip() or OPENAI_MODEL
         if model_name.startswith("gpt-5") and "/" not in model_name:
-            model_name = f"openai/{model_name}"
+            model_name = f"openai/responses/{model_name}"
 
         logging.info(f"Using OpenAI model: {model_name}")
         return LiteLlm(model=model_name, drop_params=True)

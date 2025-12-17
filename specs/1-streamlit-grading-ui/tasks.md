@@ -3,7 +3,7 @@
 **Input**: Design documents from `/specs/1-streamlit-grading-ui/`
 **Prerequisites**: plan.md ✅, spec.md ✅, research.md ✅, data-model.md ✅, quickstart.md ✅
 
-**Tests**: Included for critical flows (grading service wiring + Runner event → UI state mapping). Existing pytest coverage lives in `capstone/tests/`.
+**Tests**: Not explicitly requested. Test tasks omitted.
 
 **Organization**: Tasks organized by user story to enable independent implementation and testing.
 
@@ -118,7 +118,7 @@
 - [X] T042 [US4] Map backend events to UI state updates (current_step, grades, final_score, feedback) in `ui/app.py`
 - [X] T043 [US4] Wire "Start Grading" button to call grading service functions in `ui/app.py`
 
-**Checkpoint**: User Story 4 complete — UI wired to grading service (real ADK Runner streaming still pending; see Integration Sprint)
+**Checkpoint**: User Story 4 complete — UI fully connected to ADK backend
 
 ---
 
@@ -157,43 +157,23 @@
 
 ---
 
-## Integration Sprint: ADK Backend + Approval Flow (Closed)
+## Integration Sprint: ADK Backend + Approval Flow (New)
 
 **Purpose**: Substitute the simulation by the real Runner and implement HITL approval
 
-**Status**: Closed (Runner integration shipped + manual E2E validated). Remaining items moved to UI v2 spec.
-
-- [X] I001 Connect `run_grading()` to `runner/grading_app` (rubric + submission) in `ui/services/grading.py`
-- [X] H001 Hotfix: stabilize graders (limit concurrency; retry per criterion with backoff; repair/validate JSON of `CriterionGrade`; if retries are exhausted, mark criterion error without derailing the flow and WITHOUT accepting fallback that degrades quality — must re-execute the criterion to obtain valid output)
-- [X] I002 Map events from Runner → `st.session_state` (steps, criteria, final_score, feedback, errors)
-- [X] I003 Handle Runner failures/timeouts with error messages in UI
-- [X] I004 Adjust `start_grading()` in `ui/app.py` to consume real events (without altering UX)
-- [X] I006 Manual E2E test with real rubric/submission (validate states, messages, and results; prefer OpenAI provider to avoid Gemini quota)
-- [X] OAI01 Criar `services/openai_client.py` com LiteLLM (config por env `OPENAI_API_KEY`, `OPENAI_BASE_URL` opcional; helper `generate_json`)
-- [X] OAI02 Permit toggle de provider (Gemini/OpenAI) nos graders e pipeline (sem degradar H001/I002)
-- [X] OAI03 Documentar uso do provider OpenAI em README/quickstart e `.env.example`
-- [X] OAI04 Tests: unit tests for `openai_client` (mock LiteLLM) and smoke tests of graders with OpenAI provider
-
-**Moved to UI v2 spec (deferred):**
-
+- [ ] I001 Connect `run_grading()` to `runner/grading_app` (rubric + submission) in `ui/services/grading.py`
+- [ ] H001 Hotfix: stabilize graders (limit concurrency; retry per criterion with backoff; repair/validate JSON of `CriterionGrade`; if retries are exhausted, mark criterion error without derailing the flow and WITHOUT accepting fallback that degrades quality — must re-execute the criterion to obtain valid output)
+- [ ] I002 Map events from Runner → `st.session_state` (steps, criteria, final_score, feedback, errors)
+- [ ] I003 Handle Runner failures/timeouts with error messages in UI
+- [ ] I004 Adjust `start_grading()` in `ui/app.py` to consume real events (without altering UX)
 - [ ] I005 Implement approval modal/flow (<50% or >90%) with confirm/adjust grade
+- [ ] I006 E2E test with real rubric/submission (validate states, messages, and results)
 - [ ] T1007 Delete legacy code (final cleanup)
 - [ ] TTEST01 [P] Cobrir H001/I002 com unit tests (parse/repair JSON, retries por critério) em `tests/`
-- [ ] TTEST02 Automated E2E smoke test for Streamlit UI (prefer `streamlit.testing.AppTest`; use fake Runner/mocked LLM to avoid real API calls)
-
----
-
-## Backlog: UX / Event Stream Improvements (Post-E2E)
-
-**Purpose**: Improve how Runner events are surfaced in the UI (clarity, ordering, noise reduction) without changing core grading logic.
-
-**Tracking**: Moved to UI v2 spec (`specs/2-streamlit-grading-ui-v2/`).
-
-- [ ] UXE01 Review event → chat mapping to avoid duplicated/noisy messages (ensure one `step_start` + one `step_complete` per step)
-- [ ] UXE02 Show per-criterion updates in chat (criterion name + score/max + short notes) as they arrive
-- [ ] UXE03 Surface `pending_approval` / tool confirmation requests clearly (banner/card) with `approval_reason`
-- [ ] UXE04 Add optional "Debug events" toggle to show raw Runner events (for troubleshooting)
-- [ ] UXE05 Add "Cancel grading" action to stop a running session gracefully
+- [ ] OAI01 Criar `services/openai_client.py` com LiteLLM (config por env `OPENAI_API_KEY`, `OPENAI_BASE_URL` opcional; helper `generate_json`)
+- [ ] OAI02 Permit toggle de provider (Gemini/OpenAI) nos graders e pipeline (sem degradar H001/I002)
+- [ ] OAI03 Documentar uso do provider OpenAI em README/quickstart e `.env.example`
+- [ ] OAI04 Tests: unit tests for `openai_client` (mock LiteLLM) and smoke tests of graders with OpenAI provider
 
 ---
 

@@ -76,18 +76,8 @@ def reset_session():
 
 def start_grading():
     """Trigger the grading process and run the pipeline."""
-    from ui.services.grading import start_grading_session
+    from ui.services.grading import start_grading_session, run_grading
     from ui.components.chat import add_message
-    
-    st.session_state.messages = []
-    st.session_state.grading_session_id = None
-    st.session_state.grades = {}
-    st.session_state.final_score = None
-    st.session_state.feedback = None
-    st.session_state.pending_approval = False
-    st.session_state.approval_reason = None
-    st.session_state.error_message = None
-    st.session_state.current_step = "idle"
     
     # Initialize session
     start_grading_session()
@@ -96,67 +86,53 @@ def start_grading():
     
     # Add start message
     add_message("assistant", "🚀 Starting grading process...")
-
-
-def _consume_grading_events(chat_slot, results_slot) -> None:
-    from ui.components.chat import add_message, render_chat
-    from ui.components.results import render_results
-    from ui.services.grading import run_grading
-
+    
+    # Run grading pipeline
     try:
         for event in run_grading():
             event_type = event.get("type", "")
             step = event.get("step", "")
             data = event.get("data", {})
-
+            
+            # Update current step
             if event_type == "step_start":
                 st.session_state.current_step = step
                 add_message("assistant", f"📋 {data.get('message', step)}")
-
+            
             elif event_type == "step_complete":
                 if step == "grading":
                     add_message("assistant", f"✅ {data.get('message', 'Step complete')}")
                 elif step == "aggregating":
-                    st.session_state.final_score = data
                     score = data.get("percentage", 0)
                     grade = data.get("letter_grade", "N/A")
                     add_message("assistant", f"📊 Final Score: {score:.1f}% ({grade})")
                 elif step == "feedback":
-                    st.session_state.feedback = data
                     add_message("assistant", "💬 Feedback generated!")
-
+            
             elif event_type == "criterion_graded":
                 criterion = data.get("criterion_name", "Unknown")
+                score = data.get("score", 0)
+                max_score = data.get("max_score", 0)
                 st.session_state.grades[criterion] = data
-
+            
             elif event_type == "error":
                 st.session_state.error_message = data.get("message", "Unknown error")
                 add_message("assistant", f"❌ Error: {st.session_state.error_message}")
                 st.session_state.grading_in_progress = False
                 st.session_state.current_step = "idle"
-                break
-
+                return
+            
             elif event_type == "grading_complete":
                 st.session_state.current_step = "complete"
                 add_message("assistant", "✅ Grading complete! Review the results below.")
-
-            with chat_slot.container():
-                render_chat()
-            with results_slot.container():
-                render_results()
-
+        
         st.session_state.grading_in_progress = False
-
+        
     except Exception as e:
         st.session_state.error_message = str(e)
         st.session_state.grading_in_progress = False
         st.session_state.current_step = "idle"
         add_message("assistant", f"❌ Error during grading: {e}")
-
-    with chat_slot.container():
-        render_chat()
-    with results_slot.container():
-        render_results()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -184,27 +160,20 @@ with st.sidebar:
 # Main area - chat/grading interface and results
 main_area = st.container()
 with main_area:
-    chat_slot = st.empty()
-    results_slot = st.empty()
-    debug_slot = st.empty()
-
-    with chat_slot.container():
-        render_chat()
-
-    with results_slot.container():
-        render_results()
-
-    if st.session_state.grading_in_progress:
-        _consume_grading_events(chat_slot, results_slot)
-
-    with debug_slot.container():
-        with st.expander("Debug: Session State", expanded=False):
-            st.json({
-                "setup_complete": st.session_state.setup_complete,
-                "rubric_valid": st.session_state.rubric_valid,
-                "submission_loaded": st.session_state.submission_text is not None,
-                "current_step": st.session_state.current_step,
-                "grading_in_progress": st.session_state.grading_in_progress,
-                "grades": st.session_state.grades,
-                "final_score": st.session_state.final_score,
-            })
+    # Show chat/progress interface
+    render_chat()
+    
+    # Show results when grading is complete
+    render_results()
+    
+    # Show current state for debugging
+    with st.expander("Debug: Session State", expanded=False):
+        st.json({
+            "setup_complete": st.session_state.setup_complete,
+            "rubric_valid": st.session_state.rubric_valid,
+            "submission_loaded": st.session_state.submission_text is not None,
+            "current_step": st.session_state.current_step,
+            "grading_in_progress": st.session_state.grading_in_progress,
+            "grades": st.session_state.grades,
+            "final_score": st.session_state.final_score,
+        })
