@@ -11,22 +11,9 @@ RubricGuardrailPlugin can check it before allowing grading agents to run.
 """
 
 import json
-import re
-import unicodedata
 from typing import Any
 
 from google.adk.tools.tool_context import ToolContext
-
-
-def _slugify(text: str) -> str:
-    """Normalize arbitrary text into a safe identifier."""
-    if not text:
-        return "criterion"
-    normalized = unicodedata.normalize("NFKD", text)
-    ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
-    slug = re.sub(r"[^a-zA-Z0-9]+", "_", ascii_text)
-    slug = slug.strip("_").lower()
-    return slug or "criterion"
 
 
 def validate_rubric(rubric_json: str, tool_context: ToolContext) -> dict:
@@ -90,7 +77,6 @@ def validate_rubric(rubric_json: str, tool_context: ToolContext) -> dict:
     
     # Validate each criterion
     total_points = 0
-    used_slugs = set()
     for i, criterion in enumerate(rubric["criteria"]):
         prefix = f"Criterion {i + 1}"
         
@@ -113,16 +99,6 @@ def validate_rubric(rubric_json: str, tool_context: ToolContext) -> dict:
         
         if "description" not in criterion:
             errors.append(f"{prefix}: missing 'description' field")
-
-        # Persist slug for downstream agents/tools
-        slug = _slugify(criterion.get("name"))
-        original_slug = slug
-        counter = 2
-        while slug in used_slugs:
-            slug = f"{original_slug}_{counter}"
-            counter += 1
-        criterion["slug"] = slug
-        used_slugs.add(slug)
     
     # Build and return result (saves to state via helper)
     if errors:
