@@ -8,11 +8,8 @@ google-genai>=0.1.0
 # Environment and utilities
 python-dotenv>=1.0.0
 
+# Database (for persistent sessions)
 sqlalchemy>=2.0.0
 
 # Optional: Streamlit frontend
 streamlit>=1.28.0
-
-streamlit-js-eval>=0.1.7
-
-litellm>=1.40.0

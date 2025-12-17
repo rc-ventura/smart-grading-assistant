@@ -2,11 +2,11 @@
 # Custom tools for the grading pipeline
 
 from .validate_rubric import validate_rubric
+from .grade_criterion import grade_criterion
 from .calculate_score import calculate_final_score
-from .save_submission import save_submission
 
 __all__ = [
     "validate_rubric",
+    "grade_criterion", 
     "calculate_final_score",
-    "save_submission",
 ]
