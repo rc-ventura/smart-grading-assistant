@@ -5,35 +5,66 @@ import streamlit as st
 
 def render_chat() -> None:
     """Render the chat/grading interface with progress and messages."""
-    
+
+    progress_slot = st.container()
+    approval_slot = st.container()
+    history_slot = st.container()
+    criterion_slot = st.container()
+    error_slot = st.container()
+    input_slot = st.container()
+
     # ─────────────────────────────────────────────────────────────────────────
     # Progress Indicator
     # ─────────────────────────────────────────────────────────────────────────
-    if st.session_state.grading_in_progress or st.session_state.current_step != "idle":
-        _render_progress_indicator()
-    
+    with progress_slot:
+        if st.session_state.grading_in_progress or st.session_state.current_step != "idle":
+            _render_progress_indicator()
+        else:
+            st.empty()
+
+    with approval_slot:
+        if st.session_state.pending_approval:
+            reason = st.session_state.approval_reason or "Edge case detected"
+            st.warning(f"⚠️ **Approval Required:** {reason}")
+            confirmations = st.session_state.get("requested_tool_confirmations")
+            if confirmations:
+                with st.expander("Approval details", expanded=False):
+                    st.json(confirmations)
+        else:
+            st.empty()
+
     # ─────────────────────────────────────────────────────────────────────────
     # Chat History
     # ─────────────────────────────────────────────────────────────────────────
-    _render_chat_history()
-    
+    with history_slot:
+        _render_chat_history()
+
     # ─────────────────────────────────────────────────────────────────────────
     # Per-Criterion Scores (as they complete)
     # ─────────────────────────────────────────────────────────────────────────
-    if st.session_state.grades:
-        _render_criterion_scores()
-    
+    with criterion_slot:
+        if st.session_state.grades:
+            _render_criterion_scores()
+        else:
+            st.empty()
+
     # ─────────────────────────────────────────────────────────────────────────
     # Error Display
     # ─────────────────────────────────────────────────────────────────────────
-    if st.session_state.error_message:
-        st.error(f"❌ Error: {st.session_state.error_message}")
-    
+    with error_slot:
+        if st.session_state.error_message:
+            st.error(f"❌ Error: {st.session_state.error_message}")
+        else:
+            st.empty()
+
     # ─────────────────────────────────────────────────────────────────────────
     # Input Box (optional teacher queries)
     # ─────────────────────────────────────────────────────────────────────────
-    if not st.session_state.grading_in_progress and st.session_state.current_step == "idle":
-        _render_input_box()
+    with input_slot:
+        if not st.session_state.grading_in_progress and st.session_state.current_step == "idle":
+            _render_input_box()
+        else:
+            st.empty()
 
 
 def _render_progress_indicator() -> None:
@@ -95,10 +126,10 @@ def _render_criterion_scores() -> None:
     
     st.subheader("📊 Grading Progress")
     
-    cols = st.columns(min(len(grades), 3))
+    cols = st.columns(3)
     
     for idx, (criterion_name, grade_data) in enumerate(grades.items()):
-        col_idx = idx % 3
+        col_idx = idx % len(cols)
         with cols[col_idx]:
             score = grade_data.get("score", 0)
             max_score = grade_data.get("max_score", 0)

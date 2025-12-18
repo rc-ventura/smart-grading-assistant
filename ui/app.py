@@ -1,19 +1,7 @@
-import sys
-from pathlib import Path
-
+import copy
 import streamlit as st
 from google import genai
 from google.genai import types
-
-# Ensure project root is on sys.path so `capstone` package is importable
-UI_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = UI_DIR.parent  # /capstone
-REPO_ROOT = PROJECT_ROOT.parent  # repo root
-
-for path in (str(PROJECT_ROOT), str(REPO_ROOT)):
-    if path not in sys.path:
-        sys.path.insert(0, path)
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Page Configuration
 # ─────────────────────────────────────────────────────────────────────────────
@@ -52,16 +40,23 @@ DEFAULT_STATE = {
     "feedback": None,
     # Chat/messages state
     "messages": [],
+    "event_log": [],
+    "_event_log_index": {},
+    "_seen_step_start": {},
+    "_seen_step_complete": {},
+    "_seen_criteria": {},
+    "_pending_approval_notified": False,
     # Human-in-the-loop state
     "pending_approval": False,
     "approval_reason": None,
+    "requested_tool_confirmations": None,
     # Error state
     "error_message": None,
 }
 
 for key, default_value in DEFAULT_STATE.items():
     if key not in st.session_state:
-        st.session_state[key] = default_value
+        st.session_state[key] = copy.deepcopy(default_value)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -69,8 +64,8 @@ for key, default_value in DEFAULT_STATE.items():
 # ─────────────────────────────────────────────────────────────────────────────
 def reset_session():
     """Clear all session state and restart."""
-    for key in DEFAULT_STATE:
-        st.session_state[key] = DEFAULT_STATE[key]
+    for key, default_value in DEFAULT_STATE.items():
+        st.session_state[key] = copy.deepcopy(default_value)
     st.rerun()
 
 
@@ -80,12 +75,19 @@ def start_grading():
     from ui.components.chat import add_message
     
     st.session_state.messages = []
+    st.session_state.event_log = []
+    st.session_state._event_log_index = {}
+    st.session_state._seen_step_start = {}
+    st.session_state._seen_step_complete = {}
+    st.session_state._seen_criteria = {}
+    st.session_state._pending_approval_notified = False
     st.session_state.grading_session_id = None
     st.session_state.grades = {}
     st.session_state.final_score = None
     st.session_state.feedback = None
     st.session_state.pending_approval = False
     st.session_state.approval_reason = None
+    st.session_state.requested_tool_confirmations = None
     st.session_state.error_message = None
     st.session_state.current_step = "idle"
     

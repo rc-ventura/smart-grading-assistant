@@ -28,11 +28,11 @@
 
 ## Phase B: Streaming UX (Incremental, non-blocking)
 
-- [ ] UIV2-010 Replace abrupt placeholders with stable containers in Chat tab (progress shell)
-- [ ] UIV2-011 Add event buffer in `st.session_state` (ordered log + dedup)
-- [ ] UIV2-012 Improve event → chat mapping (reduce duplication/noise; ensure one `step_start` + one `step_complete` per step)
-- [ ] UIV2-013 Show per-criterion updates in chat with consistent formatting (criterion + score/max + short notes) as they arrive
-- [ ] UIV2-014 Surface `pending_approval` / tool confirmation requests clearly (banner/card) with `approval_reason`
+- [X] UIV2-010 Replace abrupt placeholders with stable containers in Chat tab (progress shell)
+- [X] UIV2-011 Add event buffer in `st.session_state` (ordered log + dedup)
+- [X] UIV2-012 Improve event → chat mapping (reduce duplication/noise; ensure one `step_start` + one `step_complete` per step)
+- [X] UIV2-013 Show per-criterion updates in chat with consistent formatting (criterion + score/max + short notes) as they arrive
+- [X] UIV2-014 Surface `pending_approval` / tool confirmation requests clearly (banner/card) with `approval_reason`
 
 **Checkpoint**: During grading, UI updates incrementally and never appears frozen.
 
