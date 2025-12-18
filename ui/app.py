@@ -98,67 +98,6 @@ def start_grading():
     add_message("assistant", "🚀 Starting grading process...")
 
 
-def _consume_grading_events(chat_slot, results_slot) -> None:
-    from ui.components.chat import add_message, render_chat
-    from ui.components.results import render_results
-    from ui.services.grading import run_grading
-
-    try:
-        for event in run_grading():
-            event_type = event.get("type", "")
-            step = event.get("step", "")
-            data = event.get("data", {})
-
-            if event_type == "step_start":
-                st.session_state.current_step = step
-                add_message("assistant", f"📋 {data.get('message', step)}")
-
-            elif event_type == "step_complete":
-                if step == "grading":
-                    add_message("assistant", f"✅ {data.get('message', 'Step complete')}")
-                elif step == "aggregating":
-                    st.session_state.final_score = data
-                    score = data.get("percentage", 0)
-                    grade = data.get("letter_grade", "N/A")
-                    add_message("assistant", f"📊 Final Score: {score:.1f}% ({grade})")
-                elif step == "feedback":
-                    st.session_state.feedback = data
-                    add_message("assistant", "💬 Feedback generated!")
-
-            elif event_type == "criterion_graded":
-                criterion = data.get("criterion_name", "Unknown")
-                st.session_state.grades[criterion] = data
-
-            elif event_type == "error":
-                st.session_state.error_message = data.get("message", "Unknown error")
-                add_message("assistant", f"❌ Error: {st.session_state.error_message}")
-                st.session_state.grading_in_progress = False
-                st.session_state.current_step = "idle"
-                break
-
-            elif event_type == "grading_complete":
-                st.session_state.current_step = "complete"
-                add_message("assistant", "✅ Grading complete! Review the results below.")
-
-            with chat_slot.container():
-                render_chat()
-            with results_slot.container():
-                render_results()
-
-        st.session_state.grading_in_progress = False
-
-    except Exception as e:
-        st.session_state.error_message = str(e)
-        st.session_state.grading_in_progress = False
-        st.session_state.current_step = "idle"
-        add_message("assistant", f"❌ Error during grading: {e}")
-
-    with chat_slot.container():
-        render_chat()
-    with results_slot.container():
-        render_results()
-
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Main Layout
 # ─────────────────────────────────────────────────────────────────────────────
@@ -166,13 +105,10 @@ st.title("📝 Smart Grading Assistant")
 
 # Import components
 from ui.components.sidebar import render_sidebar
-from ui.components.chat import render_chat, add_message, add_grading_update
-from ui.components.results import render_results
-from ui.services.grading import (
-    start_grading_session,
-    run_grading,
-    get_results,
-)
+from ui.components.chat import render_chat
+from ui.components.results import render_results, render_reports
+from ui.services.grading_consumer import consume_grading_events
+
 
 # Render sidebar with callbacks
 with st.sidebar:
@@ -184,27 +120,47 @@ with st.sidebar:
 # Main area - chat/grading interface and results
 main_area = st.container()
 with main_area:
-    chat_slot = st.empty()
-    results_slot = st.empty()
-    debug_slot = st.empty()
+    tab_chat, tab_results, tab_debug, tab_reports = st.tabs(
+        ["Chat", "Results", "Debug", "Reports"]
+    )
 
-    with chat_slot.container():
-        render_chat()
+    with tab_chat:
+        chat_slot = st.empty()
 
-    with results_slot.container():
-        render_results()
+    with tab_results:
+        results_slot = st.empty()
+
+    with tab_debug:
+        debug_slot = st.empty()
+
+    with tab_reports:
+        reports_slot = st.empty()
+
+    with tab_results:
+        with results_slot.container():
+            render_results()
+
+    with tab_reports:
+        with reports_slot.container():
+            render_reports()
+
+    with tab_debug:
+        with debug_slot.container():
+            with st.expander("Debug: Session State", expanded=False):
+                st.json({
+                    "setup_complete": st.session_state.setup_complete,
+                    "rubric_valid": st.session_state.rubric_valid,
+                    "submission_loaded": st.session_state.submission_text is not None,
+                    "current_step": st.session_state.current_step,
+                    "grading_in_progress": st.session_state.grading_in_progress,
+                    "grades": st.session_state.grades,
+                    "final_score": st.session_state.final_score,
+                })
 
     if st.session_state.grading_in_progress:
-        _consume_grading_events(chat_slot, results_slot)
-
-    with debug_slot.container():
-        with st.expander("Debug: Session State", expanded=False):
-            st.json({
-                "setup_complete": st.session_state.setup_complete,
-                "rubric_valid": st.session_state.rubric_valid,
-                "submission_loaded": st.session_state.submission_text is not None,
-                "current_step": st.session_state.current_step,
-                "grading_in_progress": st.session_state.grading_in_progress,
-                "grades": st.session_state.grades,
-                "final_score": st.session_state.final_score,
-            })
+        with tab_chat:
+            consume_grading_events(chat_slot, results_slot)
+    else:
+        with tab_chat:
+            with chat_slot.container():
+                render_chat()

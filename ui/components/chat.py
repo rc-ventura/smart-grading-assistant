@@ -59,11 +59,11 @@ def _render_progress_indicator() -> None:
     
     # Show progress bar
     st.progress(progress, text=f"**{step_labels.get(step, step.capitalize())}**")
-    
+
     # Show step details
+    status_slot = st.empty()
     if st.session_state.grading_in_progress:
-        with st.spinner(f"{step_labels.get(step, 'Processing')}..."):
-            st.empty()
+        status_slot.caption(f"{step_labels.get(step, 'Processing')}...")
 
 
 def _render_chat_history() -> None:

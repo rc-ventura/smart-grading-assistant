@@ -5,7 +5,6 @@ import os
 
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.models.google_llm import Gemini
-import google.generativeai as genai
 from google.genai import types
 from google.genai.types import GenerationConfig
 from config import (
@@ -120,24 +119,3 @@ def get_agent_generate_config_for(agent_kind: str) -> types.GenerateContentConfi
         max_output_tokens=max_output_tokens,
     )
 
-
-def get_ui_model(
-    *,
-    model_name: str | None = None,
-    temperature: float = 0.7,
-    max_output_tokens: int = 1024,
-    top_p: float = None,
-    top_k: Optional[int] = None,
-) -> genai.GenerativeModel:
-    """Return a GenerativeModel instance for UI or non-ADK use.
-
-    Call configure_ui_client(api_key) once before using this helper.
-    """
-    generation_config = GenerationConfig(
-        temperature=temperature,
-        max_output_tokens=max_output_tokens,
-        top_p=top_p,
-        top_k=top_k,
-    )
-
-    return genai.GenerativeModel(model_name or MODEL, generation_config=generation_config)

@@ -10,7 +10,6 @@ from services.llm_provider import (
     get_model,
     get_agent_generate_config,
     get_agent_generate_config_for,
-    get_ui_model,
 )
 from config import MODEL, retry_config
 from agents.graders import create_criterion_grader
@@ -140,37 +139,6 @@ def test_get_agent_generate_config_for_feedback_openai_gpt5_enforces_min(monkeyp
     assert isinstance(cfg, types.GenerateContentConfig)
     assert cfg.max_output_tokens == 2048
 
-
-def test_get_ui_model_passes_generation_config(monkeypatch):
-    """get_ui_model must pass temperature/tokens for GenerationConfig."""
-
-    captured = {}
-
-    class DummyGenerativeModel:
-        def __init__(self, model, generation_config=None):
-            captured["model"] = model
-            captured["generation_config"] = generation_config
-
-    monkeypatch.setattr(
-        "services.llm_provider.genai.GenerativeModel",
-        DummyGenerativeModel,
-    )
-
-    model = get_ui_model(
-        temperature=0.4,
-        max_output_tokens=512,
-        top_p=0.8,
-        top_k=10,
-    )
-
-    assert isinstance(model, DummyGenerativeModel)
-
-    gen_cfg = captured["generation_config"]
-    assert isinstance(gen_cfg, types.GenerationConfig)
-    assert gen_cfg.temperature == 0.4
-    assert gen_cfg.max_output_tokens == 512
-    assert gen_cfg.top_p == 0.8
-    assert gen_cfg.top_k == 10
 
 
 def test_create_criterion_grader_uses_shared_model_and_config():

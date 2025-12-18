@@ -18,6 +18,7 @@ def render_results() -> None:
     
     # Only show results when grading is complete
     if st.session_state.current_step != "complete":
+        st.container()
         return
     
     st.header("📊 Grading Results")
@@ -40,9 +41,15 @@ def render_results() -> None:
     # Feedback Panel
     # ─────────────────────────────────────────────────────────────────────────
     _render_feedback_panel()
-    
-    st.divider()
-    
+
+
+def render_reports() -> None:
+    if st.session_state.current_step != "complete":
+        st.container()
+        return
+
+    st.header("📤 Reports")
+
     # ─────────────────────────────────────────────────────────────────────────
     # Export Options
     # ─────────────────────────────────────────────────────────────────────────
@@ -245,6 +252,7 @@ def _render_export_options() -> None:
             file_name="grading_results.json",
             mime="application/json",
             use_container_width=True,
+            key="download_json_results",
         )
     
     with col2:

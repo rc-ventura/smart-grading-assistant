@@ -161,7 +161,7 @@
 
 **Purpose**: Substitute the simulation by the real Runner and implement HITL approval
 
-**Status**: Closed (Runner integration shipped + manual E2E validated). Remaining items moved to UI v2 spec.
+**Status**: Closed (Runner integration shipped + manual E2E validated). Follow-ups are tracked in UI v2 (`specs/2-streamlit-grading-ui-v2/tasks.md`).
 
 - [X] I001 Connect `run_grading()` to `runner/grading_app` (rubric + submission) in `ui/services/grading.py`
 - [X] H001 Hotfix: stabilize graders (limit concurrency; retry per criterion with backoff; repair/validate JSON of `CriterionGrade`; if retries are exhausted, mark criterion error without derailing the flow and WITHOUT accepting fallback that degrades quality — must re-execute the criterion to obtain valid output)
@@ -173,27 +173,6 @@
 - [X] OAI02 Permit toggle de provider (Gemini/OpenAI) nos graders e pipeline (sem degradar H001/I002)
 - [X] OAI03 Documentar uso do provider OpenAI em README/quickstart e `.env.example`
 - [X] OAI04 Tests: unit tests for `openai_client` (mock LiteLLM) and smoke tests of graders with OpenAI provider
-
-**Moved to UI v2 spec (deferred):**
-
-- [ ] I005 Implement approval modal/flow (<50% or >90%) with confirm/adjust grade
-- [ ] T1007 Delete legacy code (final cleanup)
-- [ ] TTEST01 [P] Cobrir H001/I002 com unit tests (parse/repair JSON, retries por critério) em `tests/`
-- [ ] TTEST02 Automated E2E smoke test for Streamlit UI (prefer `streamlit.testing.AppTest`; use fake Runner/mocked LLM to avoid real API calls)
-
----
-
-## Backlog: UX / Event Stream Improvements (Post-E2E)
-
-**Purpose**: Improve how Runner events are surfaced in the UI (clarity, ordering, noise reduction) without changing core grading logic.
-
-**Tracking**: Moved to UI v2 spec (`specs/2-streamlit-grading-ui-v2/`).
-
-- [ ] UXE01 Review event → chat mapping to avoid duplicated/noisy messages (ensure one `step_start` + one `step_complete` per step)
-- [ ] UXE02 Show per-criterion updates in chat (criterion name + score/max + short notes) as they arrive
-- [ ] UXE03 Surface `pending_approval` / tool confirmation requests clearly (banner/card) with `approval_reason`
-- [ ] UXE04 Add optional "Debug events" toggle to show raw Runner events (for troubleshooting)
-- [ ] UXE05 Add "Cancel grading" action to stop a running session gracefully
 
 ---
 

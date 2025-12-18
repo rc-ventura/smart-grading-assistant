@@ -180,8 +180,8 @@ Goal: completed — stream real Runner events into the existing UI without chang
 | Load from examples | Select from `examples/rubrics/` |
 | Syntax highlighting | Code submissions with highlighting |
 | Line numbers | Show line numbers in submission preview |
-| Approval modal | Modal for human-in-the-loop decisions |
-| Session history | List and resume past sessions |
+| Approval modal | Deferred to `/specs/2-streamlit-grading-ui-v2/` |
+| Session history | Future spec (not part of Spec 1 deliverable) |
 
 ---
 

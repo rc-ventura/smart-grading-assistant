@@ -43,10 +43,8 @@ def setup_state(st_module):
     )
 
 
-def test_simulated_grading_flow(monkeypatch):
-    """
-    Validate simulation fallback emits expected event sequence and populates state.
-    """
+def test_run_grading_returns_error_when_adk_unavailable(monkeypatch):
+    """When ADK is unavailable, grading should fail explicitly (no simulation)."""
     # Ensure repo root on path for `ui` imports
     repo_root = Path(__file__).resolve().parents[2]
     if str(repo_root) not in sys.path:
@@ -70,24 +68,19 @@ def test_simulated_grading_flow(monkeypatch):
     st.session_state.submission_text = "print('hello')"
 
     events = list(grading.run_grading())
-    steps = [e["step"] for e in events if "step" in e]
 
-    assert steps[0] == "validating"
-    assert "grading" in steps
-    assert "aggregating" in steps
-    assert "feedback" in steps
-    assert any(e["type"] == "criterion_graded" for e in events)
-    assert any(e["type"] == "grading_complete" for e in events)
+    assert events == [
+        {"type": "error", "step": "runner", "data": {"message": "ADK backend not available"}}
+    ]
 
-    # State populated
-    assert st.session_state.grades
-    assert st.session_state.final_score is not None
-    assert st.session_state.feedback is not None
+    assert st.session_state.grades == {}
+    assert st.session_state.final_score is None
+    assert st.session_state.feedback is None
 
 
 def test_runner_event_mapping_generic(monkeypatch):
     """
-    Ensure _map_runner_event returns a safe structure for unknown dict events.
+    Ensure map_runner_event returns a safe structure for unknown dict events.
     """
     repo_root = Path(__file__).resolve().parents[2]
     if str(repo_root) not in sys.path:
@@ -96,7 +89,7 @@ def test_runner_event_mapping_generic(monkeypatch):
     from ui.services import grading
 
     raw = {"foo": "bar"}
-    mapped = grading._map_runner_event(raw)
+    mapped = grading.map_runner_event(raw)
     assert mapped["type"] == "event"
     assert mapped["step"] == "runner"
 
@@ -112,13 +105,13 @@ def test_runner_event_mapping_structured(monkeypatch):
     from ui.services import grading
 
     raw = {"type": "step_start", "step": "validating", "data": {"message": "ok"}}
-    mapped = grading._map_runner_event(raw)
+    mapped = grading.map_runner_event(raw)
     assert mapped == raw
 
 
 def test_runner_wrapper_consumes_async(monkeypatch):
     """
-    Smoke test _run_runner_events mapping loop using a fake runner.
+    Smoke test run_runner_events mapping loop using a fake runner.
     """
     repo_root = Path(__file__).resolve().parents[2]
     if str(repo_root) not in sys.path:
@@ -185,7 +178,7 @@ def test_runner_wrapper_consumes_async(monkeypatch):
 
     async def collect():
         evs = []
-        async for ev in grading._run_runner_events(st.session_state.rubric_json, st.session_state.submission_text):
+        async for ev in grading.run_runner_events(st.session_state.rubric_json, st.session_state.submission_text):
             evs.append(ev)
         return evs
 
@@ -237,7 +230,7 @@ def test_map_runner_event_applies_state_delta_and_tool_confirmations(monkeypatch
             "evaluation_notes": "ok",
         }
     }
-    mapped = grading._map_runner_event(FakeEvent(actions=FakeActions(state_delta=grade_delta)))
+    mapped = grading.map_runner_event(FakeEvent(actions=FakeActions(state_delta=grade_delta)))
     assert mapped["type"] == "criterion_graded"
     assert "Code Quality" in st.session_state.grades
 
@@ -252,7 +245,7 @@ def test_map_runner_event_applies_state_delta_and_tool_confirmations(monkeypatch
             "approval_reason": "edge",
         }
     }
-    mapped = grading._map_runner_event(FakeEvent(actions=FakeActions(state_delta=agg_delta)))
+    mapped = grading.map_runner_event(FakeEvent(actions=FakeActions(state_delta=agg_delta)))
     assert mapped["type"] == "step_complete"
     assert mapped["step"] == "aggregating"
     assert st.session_state.pending_approval is True
@@ -267,13 +260,13 @@ def test_map_runner_event_applies_state_delta_and_tool_confirmations(monkeypatch
             "overall_summary": "z",
         }
     }
-    mapped = grading._map_runner_event(FakeEvent(actions=FakeActions(state_delta=feedback_delta)))
+    mapped = grading.map_runner_event(FakeEvent(actions=FakeActions(state_delta=feedback_delta)))
     assert mapped["type"] == "step_complete"
     assert mapped["step"] == "feedback"
     assert st.session_state.feedback is not None
     assert "improvements" in st.session_state.feedback
 
-    mapped = grading._map_runner_event(
+    mapped = grading.map_runner_event(
         FakeEvent(
             actions=FakeActions(
                 requested_tool_confirmations={
@@ -343,10 +336,138 @@ def test_runner_creates_session_when_missing(monkeypatch):
 
     async def collect():
         evs = []
-        async for ev in grading._run_runner_events(st.session_state.rubric_json, st.session_state.submission_text):
+        async for ev in grading.run_runner_events(st.session_state.rubric_json, st.session_state.submission_text):
             evs.append(ev)
         return evs
 
     asyncio.run(collect())
     assert calls["get"] == 1
     assert calls["create"] == 1
+
+
+def test_run_grading_integration_facade_stream_mapper(monkeypatch):
+    repo_root = Path(__file__).resolve().parents[2]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
+    import streamlit as st
+    setup_state(st)
+
+    from ui.services import grading
+
+    class FakePart:
+        def __init__(self, *, text: str):
+            self.text = text
+
+    class FakeContent:
+        def __init__(self, *, role: str, parts: list[Any]):
+            self.role = role
+            self.parts = parts
+
+    class FakeActions:
+        def __init__(self, *, state_delta: dict[str, Any] | None = None):
+            self.state_delta = state_delta or {}
+            self.requested_tool_confirmations = {}
+
+    class FakeEvent:
+        def __init__(self, *, state_delta: dict[str, Any] | None = None):
+            self.actions = FakeActions(state_delta=state_delta)
+            self.author = "agent"
+            self.content = None
+
+    async def fake_get_session(**kwargs):
+        return types.SimpleNamespace(id="s1")
+
+    async def fake_create_session(**kwargs):
+        return types.SimpleNamespace(id=kwargs.get("session_id") or "s-new")
+
+    class FakeRunner:
+        async def run_async(self, user_id: str, session_id: str, new_message: Any):
+            parts = getattr(new_message, "parts", None) or []
+            text = getattr(parts[0], "text", "") if parts else ""
+
+            if isinstance(text, str) and "criteria" in text:
+                yield FakeEvent(state_delta={"rubric_validation": {"status": "valid"}})
+                return
+
+            yield FakeEvent(
+                state_delta={
+                    "grade_code_quality": {
+                        "criterion_name": "Code Quality",
+                        "score": 8,
+                        "max_score": 10,
+                        "evaluation_notes": "ok",
+                    }
+                }
+            )
+            yield FakeEvent(
+                state_delta={
+                    "aggregation_result": {
+                        "total_score": 8,
+                        "max_possible": 10,
+                        "percentage": 80.0,
+                        "letter_grade": "B",
+                        "grade_details": [],
+                        "requires_human_approval": False,
+                        "approval_reason": None,
+                    }
+                }
+            )
+            yield FakeEvent(
+                state_delta={
+                    "final_feedback": {
+                        "strengths": ["s"],
+                        "areas_for_improvement": ["i"],
+                        "suggestions": ["x"],
+                        "encouragement": "y",
+                        "overall_summary": "z",
+                    }
+                }
+            )
+
+    fake_runner = types.SimpleNamespace(
+        run_async=FakeRunner().run_async,
+        session_service=types.SimpleNamespace(
+            get_session=fake_get_session,
+            create_session=fake_create_session,
+        ),
+    )
+
+    monkeypatch.setattr(grading, "runner", fake_runner)
+    monkeypatch.setattr(grading, "grading_app", types.SimpleNamespace(name="app"))
+    monkeypatch.setattr(
+        grading,
+        "types",
+        types.SimpleNamespace(Content=FakeContent, Part=FakePart),
+    )
+    monkeypatch.setattr(grading, "ADK_AVAILABLE", True)
+
+    st.session_state.rubric_json = json.dumps(
+        {"criteria": [{"name": "Q", "max_score": 1, "description": "d"}]}
+    )
+    st.session_state.submission_text = "print('x')"
+
+    events = list(grading.run_grading())
+
+    assert events[0]["type"] == "step_start"
+    assert events[0]["step"] == "validating"
+    assert any(e.get("type") == "criterion_graded" for e in events)
+    assert any(
+        e.get("type") == "step_complete" and e.get("step") == "aggregating"
+        for e in events
+    )
+    assert any(
+        e.get("type") == "step_complete" and e.get("step") == "feedback"
+        for e in events
+    )
+    assert events[-1]["type"] == "grading_complete"
+
+    assert st.session_state.rubric_valid is True
+    assert "Code Quality" in st.session_state.grades
+    assert st.session_state.final_score is not None
+    assert st.session_state.feedback is not None
+    assert "improvements" in st.session_state.feedback
+
+    loop = st.session_state.get("_adk_event_loop")
+    if loop is not None and not loop.is_closed():
+        loop.close()

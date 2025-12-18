@@ -2,7 +2,7 @@
 
 **Component Name:** SmartGradingStreamlitUI
 **Version:** 1.0.0
-**Status:** In Progress (UI + Runner integration implemented; approval flow pending; UX overhaul tracked in `/specs/2-streamlit-grading-ui-v2/`)
+**Status:** Shipped (MVP + Runner integration implemented). UX overhaul and approval modal are tracked in `/specs/2-streamlit-grading-ui-v2/`.
 **Created:** 2025-12-10
 
 ---
@@ -81,7 +81,7 @@ Streamlit-based teacher-facing UI for the Smart Grading Assistant. Connects to a
 - [X] Teacher can expand/collapse the feedback panel
 - [X] Teacher can export results as JSON or copy feedback to clipboard
 
-### 3.4 Scenario: Human-in-the-Loop Approval
+### 3.4 Scenario: Human-in-the-Loop Approval (Deferred to UI v2)
 
 **As a** teacher
 **I want to** be prompted to approve edge-case grades
@@ -89,13 +89,9 @@ Streamlit-based teacher-facing UI for the Smart Grading Assistant. Connects to a
 
 **Acceptance Criteria:**
 
-- [ ] UI shows approval modal when grade is < 50% or > 90%
-- [ ] Modal displays the reason for requiring approval
-- [ ] Teacher can accept the grade as-is
-- [ ] Teacher can adjust the grade before finalizing
-- [ ] Decision is sent back to backend for finalization
+Tracked in `/specs/2-streamlit-grading-ui-v2/` (see `UIV2-030`).
 
-### 3.5 Scenario: Session Management (Phase 2+)
+### 3.5 Scenario: Session Management (Out of Scope for Spec 1)
 
 **As a** teacher
 **I want to** view and resume past grading sessions
@@ -103,9 +99,7 @@ Streamlit-based teacher-facing UI for the Smart Grading Assistant. Connects to a
 
 **Acceptance Criteria:**
 
-- [ ] UI lists past grading sessions with summary info
-- [ ] Teacher can select a session to view details
-- [ ] Teacher can resume an incomplete session
+To be specified and planned in a future spec.
 
 ---
 
@@ -277,8 +271,8 @@ Services:
 
 - Rubric preview and inline editing
 - Syntax highlighting for code submissions
-- Human-in-the-loop approval modal
-- Session history and resume
+- Human-in-the-loop approval modal (tracked in `/specs/2-streamlit-grading-ui-v2/`)
+- Session history and resume (future spec)
 
 ### Phase 3: RAG Rubric Assistant
 
