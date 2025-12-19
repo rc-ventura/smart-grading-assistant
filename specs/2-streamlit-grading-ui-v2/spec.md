@@ -49,10 +49,10 @@ This spec builds on the existing ADK Runner integration and focuses on presentat
 
 **Acceptance Criteria:**
 
-- [ ] UI shows immediate feedback after “Start grading” (spinner/progress indicator within < 1s).
-- [ ] Runner events are surfaced incrementally in the chat (no sudden “dump” at the end).
-- [ ] Per-criterion progress/updates appear as each criterion completes.
-- [ ] Errors are shown as actionable messages with recovery paths.
+- [X] UI shows immediate feedback after “Start grading” (spinner/progress indicator within < 1s).
+- [X] Runner events are surfaced incrementally in the chat (no sudden “dump” at the end).
+- [X] Per-criterion progress/updates appear as each criterion completes.
+- [X] Errors are surfaced clearly and the UI returns to a safe state (teacher can Reset or start a new run).
 
 ### 3.2 Scenario: Tabs for navigation
 
@@ -62,8 +62,9 @@ This spec builds on the existing ADK Runner integration and focuses on presentat
 
 **Acceptance Criteria:**
 
-- [ ] App has tabs: **Chat**, **Results**, **Debug**.
-- [ ] Results render only in the Results tab (or summarized in Chat, with a link/CTA).
+- [X] App has tabs: **Chat**, **Results**, **Debug**, **Reports**.
+- [X] Results render only in the Results tab (or summarized in Chat, with a link/CTA).
+- [X] Export/report actions render in the Reports tab.
 - [ ] Debug tab can show raw Runner events/state deltas (optional toggle).
 
 ### 3.3 Scenario: Regrade without restarting Streamlit
@@ -74,9 +75,9 @@ This spec builds on the existing ADK Runner integration and focuses on presentat
 
 **Acceptance Criteria:**
 
-- [ ] After a run completes (success or error), the user can start a new run without restarting Streamlit.
+- [X] After a run completes (success or error), the user can start a new run without restarting Streamlit.
 - [ ] Any “backend closed” errors are handled by recreating the session/runner wiring as needed.
-- [ ] UI state reset is predictable (no stale flags/messages leaking into the next run).
+- [X] UI state reset is predictable (no stale flags/messages leaking into the next run).
 
 ### 3.4 Scenario: Cancel grading
 
@@ -98,6 +99,7 @@ This spec builds on the existing ADK Runner integration and focuses on presentat
 
 **Acceptance Criteria:**
 
+- [X] UI surfaces that approval is required (warning/banner) and displays the backend-provided reason when available.
 - [ ] UI shows approval modal when grade is < 50% or > 90%.
 - [ ] Modal displays the reason for requiring approval.
 - [ ] Teacher can accept the grade as-is or adjust it.
@@ -126,8 +128,9 @@ This spec builds on the existing ADK Runner integration and focuses on presentat
 | Tab | Purpose | Contents |
 | --- | --- | --- |
 | **Chat** | Primary experience | Chat history, progress indicator, per-criterion updates, start/cancel actions |
-| **Results** | Review output | Scores table, final score summary, feedback rendering, export actions |
+| **Results** | Review output | Scores table, final score summary, feedback rendering |
 | **Debug** | Troubleshoot | Raw events/state deltas (toggle), event log, diagnostics |
+| **Reports** | Export output | Download/export actions (JSON report, feedback text) |
 
 #### 4.1.2 Sidebar (optional)
 
