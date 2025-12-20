@@ -1,7 +1,16 @@
 import copy
+import os
+import sys
+
+# Add project root to sys.path
+# This allows imports like 'from ui.components...' to work regardless of CWD
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import streamlit as st
 from google import genai
 from google.genai import types
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Page Configuration
 # ─────────────────────────────────────────────────────────────────────────────
@@ -48,8 +57,10 @@ DEFAULT_STATE = {
     "_pending_approval_notified": False,
     # Human-in-the-loop state
     "pending_approval": False,
+    "approval_decision": None,
     "approval_reason": None,
     "requested_tool_confirmations": None,
+    "last_invocation_id": None,
     # Error state
     "error_message": None,
 }
@@ -86,8 +97,10 @@ def start_grading():
     st.session_state.final_score = None
     st.session_state.feedback = None
     st.session_state.pending_approval = False
+    st.session_state.approval_decision = None
     st.session_state.approval_reason = None
     st.session_state.requested_tool_confirmations = None
+    st.session_state.last_invocation_id = None
     st.session_state.error_message = None
     st.session_state.current_step = "idle"
     
@@ -109,6 +122,7 @@ st.title("📝 Smart Grading Assistant")
 from ui.components.sidebar import render_sidebar
 from ui.components.chat import render_chat
 from ui.components.results import render_results, render_reports
+from ui.components.approval import render_approval_tab
 from ui.services.grading_consumer import consume_grading_events
 
 
@@ -122,12 +136,15 @@ with st.sidebar:
 # Main area - chat/grading interface and results
 main_area = st.container()
 with main_area:
-    tab_chat, tab_results, tab_debug, tab_reports = st.tabs(
-        ["Chat", "Results", "Debug", "Reports"]
+    tab_chat, tab_approval, tab_results, tab_debug, tab_reports = st.tabs(
+        ["Chat", "Approval", "Results", "Debug", "Reports"]
     )
 
     with tab_chat:
         chat_slot = st.empty()
+
+    with tab_approval:
+        approval_slot = st.empty()
 
     with tab_results:
         results_slot = st.empty()
@@ -137,6 +154,10 @@ with main_area:
 
     with tab_reports:
         reports_slot = st.empty()
+
+    with tab_approval:
+        with approval_slot.container():
+            render_approval_tab()
 
     with tab_results:
         with results_slot.container():
@@ -155,9 +176,14 @@ with main_area:
                     "submission_loaded": st.session_state.submission_text is not None,
                     "current_step": st.session_state.current_step,
                     "grading_in_progress": st.session_state.grading_in_progress,
+                    "pending_approval": st.session_state.pending_approval,
+                    "approval_decision": st.session_state.approval_decision,
+                    "last_invocation_id": st.session_state.last_invocation_id,
                     "grades": st.session_state.grades,
                     "final_score": st.session_state.final_score,
                 })
+            
+           
 
     if st.session_state.grading_in_progress:
         with tab_chat:

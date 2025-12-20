@@ -99,6 +99,8 @@ async def run_runner_events(
         session_id=session.id,
         new_message=types.Content(role="user", parts=[types.Part(text=submission_text)]),
     ):
+        invocation_id = getattr(event, "invocation_id", None)
+        
         try:
             state_delta = getattr(getattr(event, "actions", None), "state_delta", None)
             if isinstance(state_delta, dict):
@@ -106,6 +108,7 @@ async def run_runner_events(
                     started_aggregating = True
                     yield {
                         "type": "event",
+                        "invocation_id": invocation_id,
                         "data": {
                             "type": "step_start",
                             "step": "aggregating",
@@ -116,6 +119,7 @@ async def run_runner_events(
                     started_feedback = True
                     yield {
                         "type": "event",
+                        "invocation_id": invocation_id,
                         "data": {
                             "type": "step_start",
                             "step": "feedback",
@@ -125,7 +129,105 @@ async def run_runner_events(
         except Exception:
             pass
 
-        yield {"type": "event", "data": event}
+        yield {
+            "type": "event", 
+            "invocation_id": invocation_id,
+            "data": event
+        }
+
+    # If we are pending approval, do NOT yield completion event
+    if st.session_state.get("pending_approval"):
+        return
+
+    yield {
+        "type": "event",
+        "data": {
+            "type": "grading_complete",
+            "step": "complete",
+            "data": {
+                "session_id": st.session_state.grading_session_id,
+                "final_score": st.session_state.final_score,
+                "grades": st.session_state.grades,
+                "feedback": st.session_state.feedback,
+            },
+        },
+    }
+
+
+async def resume_runner_with_confirmation(
+    invocation_id: str,
+    confirmation_message: Any,
+    *,
+    runner: Any,
+    grading_app: Any,
+    types: Any,
+) -> AsyncGenerator[dict[str, Any], None]:
+    """Resume runner with confirmation response."""
+    if not st.session_state.grading_session_id:
+        return
+
+    user_id = "teacher"
+    session_id = st.session_state.grading_session_id
+
+    # We assume session exists
+    
+    yield {
+        "type": "event",
+        "data": {
+            "type": "step_start",
+            "step": "resuming",
+            "data": {"message": "Resuming with approval..."},
+        },
+    }
+
+    started_aggregating = False
+    started_feedback = False
+
+    async for event in runner.run_async(
+        user_id=user_id,
+        session_id=session_id,
+        invocation_id=invocation_id,
+        new_message=confirmation_message,
+    ):
+        invocation_id = getattr(event, "invocation_id", None)
+
+        try:
+            state_delta = getattr(getattr(event, "actions", None), "state_delta", None)
+            if isinstance(state_delta, dict):
+                if not started_aggregating and "aggregation_result" in state_delta:
+                    started_aggregating = True
+                    yield {
+                        "type": "event",
+                        "invocation_id": invocation_id,
+                        "data": {
+                            "type": "step_start",
+                            "step": "aggregating",
+                            "data": {"message": "Aggregating scores..."},
+                        },
+                    }
+                if not started_feedback and "final_feedback" in state_delta:
+                    started_feedback = True
+                    yield {
+                        "type": "event",
+                        "invocation_id": invocation_id,
+                        "data": {
+                            "type": "step_start",
+                            "step": "feedback",
+                            "data": {"message": "Generating feedback..."},
+                        },
+                    }
+        except Exception:
+            pass
+
+        yield {
+            "type": "event", 
+            "invocation_id": invocation_id,
+            "data": event
+        }
+
+    # If we are pending approval, do NOT yield completion event
+    if st.session_state.get("pending_approval"):
+        return
 
     yield {
         "type": "event",

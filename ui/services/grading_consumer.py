@@ -136,6 +136,11 @@ def consume_grading_events(chat_slot, results_slot) -> None:
                 st.session_state.current_step = "complete"
                 add_message("assistant", "✅ Grading complete! Review the results below.")
 
+            elif event_type == "approval_finalized":
+                data = event.get("data", {})
+                msg = data.get("message", "Grade finalized.")
+                add_message("assistant", f"🛡️ **Approval Processed:** {msg}")
+
             if st.session_state.get("pending_approval") and not st.session_state.get(
                 "_pending_approval_notified"
             ):

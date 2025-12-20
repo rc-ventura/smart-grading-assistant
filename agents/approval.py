@@ -5,7 +5,7 @@ from google.adk.tools import FunctionTool
 from google.adk.tools.tool_context import ToolContext
 
 from services.llm_provider import get_model, get_agent_generate_config
-from config import MODEL_LITE, retry_config
+from config.settings import FAILING_THRESHOLD, EXCEPTIONAL_THRESHOLD
 
 
 def finalize_grade(
@@ -62,8 +62,7 @@ async def needs_approval(
             if aggregation_result.get("failed_criteria") or aggregation_result.get("missing_grade_keys"):
                 return True
 
-    return percentage < 50 or percentage > 90
-
+    return percentage < FAILING_THRESHOLD or percentage > EXCEPTIONAL_THRESHOLD
 
 approval_agent = LlmAgent(
     name="ApprovalAgent",

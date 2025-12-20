@@ -10,6 +10,7 @@ Concept from course: Day 2 - Custom Tools (FunctionTool)
 
 import json
 from typing import Any, Dict, List, Optional
+from config.settings import FAILING_THRESHOLD, EXCEPTIONAL_THRESHOLD
 
 from google.adk.tools.tool_context import ToolContext
 
@@ -265,15 +266,15 @@ def calculate_final_score(tool_context: ToolContext) -> dict:
             + ". Please review and re-run grading for those criteria."
         )
     
-    if percentage < 50:
+    if percentage < FAILING_THRESHOLD:
         requires_approval = True
         approval_reasons.append(
-            f"Score {percentage}% is below passing threshold (50%). Please review."
+            f"Score {percentage}% is below passing threshold ({FAILING_THRESHOLD}%). Please review."
         )
-    elif percentage > 90:
+    elif percentage > EXCEPTIONAL_THRESHOLD:
         requires_approval = True
         approval_reasons.append(
-            f"Score {percentage}% is exceptional (>90%). Please verify accuracy."
+            f"Score {percentage}% is exceptional ({EXCEPTIONAL_THRESHOLD}%). Please verify accuracy."
         )
 
     approval_reason = " ".join(approval_reasons) if approval_reasons else None

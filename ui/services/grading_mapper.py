@@ -125,6 +125,15 @@ def map_runner_event(raw_event: Any) -> dict[str, Any]:
                         "data": feedback,
                     }
 
+            if "approval_result" in state_delta:
+                approval = _normalize(state_delta.get("approval_result"))
+                if isinstance(approval, dict):
+                    return {
+                        "type": "step_complete",
+                        "step": "approval_finalized",
+                        "data": approval
+                    }
+
         if isinstance(requested_tool_confirmations, dict) and requested_tool_confirmations:
             normalized_confirmations = {
                 k: _normalize(v) for k, v in requested_tool_confirmations.items()

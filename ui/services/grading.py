@@ -12,18 +12,37 @@ from typing import Any, AsyncGenerator, Generator
 import streamlit as st
 
 from ui.services.grading_mapper import map_runner_event
-from ui.services.grading_runner import run_runner_events as run_runner_events_impl
+from ui.services.grading_runner import (
+    run_runner_events as run_runner_events_impl, 
+    resume_runner_with_confirmation
+)
 
 try:
-    from agent import grading_app, runner
+    from agent import grading_app, runner as _default_runner
     from google.genai import types
 
     ADK_AVAILABLE = True
 except Exception:
     ADK_AVAILABLE = False
     grading_app = None
-    runner = None
+    _default_runner = None
     types = None
+
+
+def get_runner():
+    """Get or create runner instance stored in Streamlit session state.
+    
+    This ensures the same runner (with InMemorySessionService) persists
+    across Streamlit reruns, solving the session loss problem during approval flow.
+    """
+    if not ADK_AVAILABLE:
+        return None
+    
+    # Initialize runner in session state if not present
+    if '_adk_runner' not in st.session_state:
+        st.session_state._adk_runner = _default_runner
+    
+    return st.session_state._adk_runner
 
 
 def start_grading_session() -> str:
@@ -122,6 +141,7 @@ def send_submission(submission_text: str) -> dict[str, Any]:
 
 async def run_runner_events(rubric_json: str, submission_text: str) -> AsyncGenerator[dict[str, Any], None]:
     """Async generator: send rubric and submission to ADK Runner and yield raw events."""
+    runner = get_runner()
     async for event in run_runner_events_impl(
         rubric_json,
         submission_text,
@@ -147,26 +167,63 @@ def run_grading() -> Generator[dict[str, Any], None, None]:
         yield {"type": "error", "step": "validation", "data": {"message": f"Invalid rubric JSON: {e}"}}
         return
 
-    if not ADK_AVAILABLE:
+    runner = get_runner()
+    if not runner:
         yield {
             "type": "error",
             "step": "runner",
             "data": {"message": "ADK backend not available"},
         }
         return
-
+#TODO Fix it the event_loop persistence. The loop must not persist outside where it was created. (improves.md#event-loop-persistence)
     loop = st.session_state.get("_adk_event_loop")
     if loop is None or loop.is_closed():
         loop = asyncio.new_event_loop()
         st.session_state["_adk_event_loop"] = loop
     agen: AsyncGenerator[dict[str, Any], None] | None = None
     try:
-        async def _runner_wrapper():
-            async for raw in run_runner_events(rubric_json, submission_text):
-                yield map_runner_event(raw["data"])
+        async def _consume_and_yield(generator):
+            async for raw in generator:
+                # Capture invocation_id if present
+                if "invocation_id" in raw:
+                    st.session_state.last_invocation_id = raw["invocation_id"]
+                
+                # Yield mapped event
+                if "data" in raw:
+                     yield map_runner_event(raw["data"])
+                else:
+                     yield map_runner_event(raw)
+
+        approval_decision = st.session_state.get("approval_decision")
+        invocation_id = st.session_state.get("last_invocation_id")
+
+        if approval_decision and invocation_id:
+            st.session_state.approval_decision = None
+            
+            
+            msg = types.Content(role="user", parts=[types.Part(text=f"User decision: {approval_decision}")])
+            
+            agen = _consume_and_yield(resume_runner_with_confirmation(
+                invocation_id,
+                msg,
+                runner=runner,
+                grading_app=grading_app,
+                types=types
+            ))
+        else:
+            # Explicitly call impl with dependencies
+            runner = get_runner()
+            agen = _consume_and_yield(run_runner_events_impl(
+                rubric_json, 
+                submission_text,
+                runner=runner,
+                grading_app=grading_app,
+                types=types
+            ))
+
         # Consume async generator synchronously for Streamlit
         asyncio.set_event_loop(loop)
-        agen = _runner_wrapper()
+        
         while True:
             try:
                 event = loop.run_until_complete(agen.__anext__())

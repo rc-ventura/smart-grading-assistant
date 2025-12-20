@@ -7,10 +7,10 @@ Architecture: Root Agent -> Rubric Validator -> Grading Pipeline -> Feedback
 import os
 import asyncio
 
-from google.adk.apps.app import App, EventsCompactionConfig
+from google.adk.apps.app import App, EventsCompactionConfig, ResumabilityConfig
 from google.adk.plugins import LoggingPlugin
 from google.adk.runners import Runner
-from google.adk.sessions.in_memory_session_service import InMemorySessionService
+from google.adk.sessions.in_memory_session_service import InMemorySessionService 
 from google.genai import types
 
 # Import configuration
@@ -39,9 +39,12 @@ grading_app = App(
         compaction_interval=6,  # summarize history every 6 invocations
         overlap_size=2,         # keep last 2 turns verbatim for continuity
     ),
+    resumability_config=ResumabilityConfig(
+        is_resumable=True,
+    ),
 )
 
-print("✅ App configured with context compaction (Resumability disabled)")
+print("✅ App configured with context compaction (Resumability enabled)")
 
 # =============================================================================
 # SESSION & RUNNER SETUP
@@ -50,6 +53,9 @@ print("✅ App configured with context compaction (Resumability disabled)")
 # Use SQLite for persistent sessions
 # db_path = os.path.join(DATA_DIR, "grading_sessions.db")
 # db_url = f"sqlite:///{db_path}"
+# session_service = DatabaseSessionService(db_url=db_url)
+
+# Use in-memory sessions (DatabaseSessionService causes race conditions with parallel agents)
 session_service = InMemorySessionService()
 
 # Create runner with DatabaseSessionService
@@ -58,6 +64,6 @@ runner = Runner(
     session_service=session_service,
 )
 
-print(f"✅ Runner configured with DatabaseSessionService")
+print(f"✅ Runner configured with InMemorySessionService")
 #print(f"   Database: {db_path}")
 
