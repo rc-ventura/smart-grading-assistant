@@ -28,11 +28,11 @@
 
 ## Phase B: Streaming UX (Incremental, non-blocking)
 
-- [X] UIV2-010 Replace abrupt placeholders with stable containers in Chat tab (progress shell)
-- [X] UIV2-011 Add event buffer in `st.session_state` (ordered log + dedup)
-- [X] UIV2-012 Improve event → chat mapping (reduce duplication/noise; ensure one `step_start` + one `step_complete` per step)
-- [X] UIV2-013 Show per-criterion updates in chat with consistent formatting (criterion + score/max + short notes) as they arrive
-- [X] UIV2-014 Surface `pending_approval` / tool confirmation requests clearly (banner/card) with `approval_reason`
+- [x] UIV2-010 Replace abrupt placeholders with stable containers in Chat tab (progress shell)
+- [x] UIV2-011 Add event buffer in `st.session_state` (ordered log + dedup)
+- [x] UIV2-012 Improve event → chat mapping (reduce duplication/noise; ensure one `step_start` + one `step_complete` per step)
+- [x] UIV2-013 Show per-criterion updates in chat with consistent formatting (criterion + score/max + short notes) as they arrive
+- [x] UIV2-014 Surface `pending_approval` / tool confirmation requests clearly (banner/card) with `approval_reason`
 
 **Checkpoint**: During grading, UI updates incrementally and never appears frozen.
 
@@ -50,9 +50,9 @@
 
 ## Phase D: Approval Flow (migrated from Integration Sprint)
 
-- [ ] UIV2-030 Implement approval modal/flow (<50% or >90%) with confirm/adjust grade
+- [x] UIV2-030 Implement approval modal/flow (<50% or >90%) with confirm/adjust grade
 
----
+**Checkpoint**: Approval flow works reliably.
 
 ## Phase E: Cleanup + Tests (migrated + new)
 
