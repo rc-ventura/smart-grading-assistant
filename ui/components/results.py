@@ -164,7 +164,7 @@ def _render_criterion_table() -> None:
     # Display as dataframe
     st.dataframe(
         table_data,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
     
@@ -251,7 +251,7 @@ def _render_export_options() -> None:
             data=json_str,
             file_name="grading_results.json",
             mime="application/json",
-            use_container_width=True,
+            width="stretch",
             key="download_json_results",
         )
     

@@ -23,7 +23,7 @@ def render_approval_tab(on_approve: Optional[Callable] = None, on_reject: Option
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("✅ Approve / Continue", type="primary", use_container_width=True):
+        if st.button("✅ Approve / Continue", type="primary", width="stretch"):
             st.session_state.approval_decision = "approved"
             st.session_state.pending_approval = False
             # Clear reason and confirmations to reset UI state
@@ -37,7 +37,7 @@ def render_approval_tab(on_approve: Optional[Callable] = None, on_reject: Option
             st.rerun()
             
     with col2:
-        if st.button("❌ Reject / Stop", type="secondary", use_container_width=True):
+        if st.button("❌ Reject / Stop", type="secondary", width='stretch'):
             st.session_state.approval_decision = "rejected"
             st.session_state.pending_approval = False
             st.session_state.approval_reason = None

@@ -130,7 +130,7 @@ def render_sidebar(
             on_click=on_start_grading,
             disabled=not can_start,
             type="primary",
-            use_container_width=True,
+            width='stretch',
         )
     
     with col2:
@@ -138,7 +138,7 @@ def render_sidebar(
             "🔄 Reset",
             on_click=on_reset,
             type="secondary",
-            use_container_width=True,
+            width='stretch',
         )
     
     if not can_start and not st.session_state.grading_in_progress:
