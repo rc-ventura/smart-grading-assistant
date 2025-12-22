@@ -8,7 +8,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 import streamlit as st
 from google import genai
-from google.genai import types
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -33,20 +32,25 @@ if "genai_client" not in st.session_state:
 DEFAULT_STATE = {
     # Setup flags
     "setup_complete": False,
+    
     # Rubric state
     "rubric_json": None,
     "rubric_valid": False,
     "rubric_errors": [],
+    
     # Submission state
     "submission_text": None,
+    
     # Grading session state
     "grading_session_id": None,
     "grading_in_progress": False,
     "current_step": "idle",  # idle, validating, grading, aggregating, feedback, complete
+    
     # Results state
     "grades": {},
     "final_score": None,
     "feedback": None,
+    
     # Chat/messages state
     "messages": [],
     "event_log": [],
@@ -55,14 +59,22 @@ DEFAULT_STATE = {
     "_seen_step_complete": {},
     "_seen_criteria": {},
     "_pending_approval_notified": False,
+    
     # Human-in-the-loop state
     "pending_approval": False,
     "approval_decision": None,
     "approval_reason": None,
     "requested_tool_confirmations": None,
     "last_invocation_id": None,
+    
+    # Cancel state
+    "cancel_requested": False,
+    
     # Error state
     "error_message": None,
+
+    # LLM provider selection
+    "llm_provider": "gemini",
 }
 
 for key, default_value in DEFAULT_STATE.items():
@@ -77,6 +89,15 @@ def reset_session():
     """Clear all session state and restart."""
     for key, default_value in DEFAULT_STATE.items():
         st.session_state[key] = copy.deepcopy(default_value)
+    
+    # Clear cached runner to ensure clean state
+    if "_adk_runner" in st.session_state:
+        del st.session_state["_adk_runner"]
+    if "_adk_app" in st.session_state:
+        del st.session_state["_adk_app"]
+    if "_adk_provider" in st.session_state:
+        del st.session_state["_adk_provider"]
+        
     st.rerun()
 
 
@@ -101,6 +122,7 @@ def start_grading():
     st.session_state.approval_reason = None
     st.session_state.requested_tool_confirmations = None
     st.session_state.last_invocation_id = None
+    st.session_state.cancel_requested = False
     st.session_state.error_message = None
     st.session_state.current_step = "idle"
     
@@ -111,6 +133,16 @@ def start_grading():
     
     # Add start message
     add_message("assistant", "🚀 Starting grading process...")
+
+
+def cancel_grading():
+    """Cancel the ongoing grading process."""
+    from ui.components.chat import add_message
+    
+    st.session_state.cancel_requested = True
+    st.session_state.error_message = "Grading cancelled by user"
+    
+    add_message("assistant", "🛑 Grading cancelled by user.")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -131,6 +163,7 @@ with st.sidebar:
     render_sidebar(
         on_start_grading=start_grading,
         on_reset=reset_session,
+        on_cancel=cancel_grading,
     )
 
 # Main area - chat/grading interface and results

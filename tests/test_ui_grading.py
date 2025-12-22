@@ -55,7 +55,13 @@ def test_run_grading_returns_error_when_adk_unavailable(monkeypatch):
 
     # Load grading service after session_state patch
     from ui.services import grading
+    from ui.services import grading_lifecycle
+    from ui.services import grading_execution
+    
+    # Mock ADK_AVAILABLE in all modules where it's used
     monkeypatch.setattr(grading, "ADK_AVAILABLE", False)
+    monkeypatch.setattr(grading_lifecycle, "ADK_AVAILABLE", False)
+    monkeypatch.setattr(grading_execution, "ADK_AVAILABLE", False)
 
     rubric = {
         "name": "Test Rubric",
@@ -157,21 +163,36 @@ def test_runner_wrapper_consumes_async(monkeypatch):
     async def fake_get_session(**kwargs):
         return types.SimpleNamespace(id="s1")
 
-    monkeypatch.setattr(
-        "ui.services.grading.runner",
-        types.SimpleNamespace(
-            run_async=fake_runner.run_async,
-            session_service=types.SimpleNamespace(get_session=fake_get_session),
-        ),
+    fake_runner_obj = types.SimpleNamespace(
+        run_async=fake_runner.run_async,
+        session_service=types.SimpleNamespace(get_session=fake_get_session),
     )
-    monkeypatch.setattr("ui.services.grading.grading_app", types.SimpleNamespace(name="app"))
+    fake_app = types.SimpleNamespace(name="app")
+    
+    from ui.services import grading
+    from ui.services import grading_lifecycle
+    from ui.services import grading_execution
+    
+    # Mock get_runner and get_app to return fake objects
+    monkeypatch.setattr(grading_lifecycle, "get_runner", lambda: fake_runner_obj)
+    monkeypatch.setattr(grading_lifecycle, "get_app", lambda: fake_app)
+    monkeypatch.setattr(grading_execution, "get_runner", lambda: fake_runner_obj)
+    monkeypatch.setattr(grading_execution, "get_app", lambda: fake_app)
+    
+    monkeypatch.setattr("ui.services.grading.runner", fake_runner_obj)
+    monkeypatch.setattr("ui.services.grading.grading_app", fake_app)
     monkeypatch.setattr("ui.services.grading.ADK_AVAILABLE", True)
+    monkeypatch.setattr(grading_lifecycle, "ADK_AVAILABLE", True)
+    monkeypatch.setattr(grading_execution, "ADK_AVAILABLE", True)
     monkeypatch.setattr(
         "ui.services.grading.types",
         types.SimpleNamespace(Content=FakeContent, Part=FakePart),
     )
-
-    from ui.services import grading
+    monkeypatch.setattr(
+        grading_execution,
+        "types",
+        types.SimpleNamespace(Content=FakeContent, Part=FakePart),
+    )
 
     st.session_state.rubric_json = json.dumps({"criteria": [{"name": "Q", "max_score": 1, "description": "d"}]})
     st.session_state.submission_text = "print('x')"
@@ -312,24 +333,38 @@ def test_runner_creates_session_when_missing(monkeypatch):
             self.role = role
             self.parts = parts
 
-    monkeypatch.setattr(
-        "ui.services.grading.runner",
-        types.SimpleNamespace(
-            run_async=FakeRunner().run_async,
-            session_service=types.SimpleNamespace(
-                get_session=fake_get_session,
-                create_session=fake_create_session,
-            ),
+    fake_runner_obj = types.SimpleNamespace(
+        run_async=FakeRunner().run_async,
+        session_service=types.SimpleNamespace(
+            get_session=fake_get_session, create_session=fake_create_session
         ),
     )
-    monkeypatch.setattr("ui.services.grading.grading_app", types.SimpleNamespace(name="app"))
+    fake_app = types.SimpleNamespace(name="app")
+    
+    from ui.services import grading
+    from ui.services import grading_lifecycle
+    from ui.services import grading_execution
+    
+    # Mock get_runner and get_app to return fake objects
+    monkeypatch.setattr(grading_lifecycle, "get_runner", lambda: fake_runner_obj)
+    monkeypatch.setattr(grading_lifecycle, "get_app", lambda: fake_app)
+    monkeypatch.setattr(grading_execution, "get_runner", lambda: fake_runner_obj)
+    monkeypatch.setattr(grading_execution, "get_app", lambda: fake_app)
+    
+    monkeypatch.setattr("ui.services.grading.runner", fake_runner_obj)
+    monkeypatch.setattr("ui.services.grading.grading_app", fake_app)
     monkeypatch.setattr("ui.services.grading.ADK_AVAILABLE", True)
+    monkeypatch.setattr(grading_lifecycle, "ADK_AVAILABLE", True)
+    monkeypatch.setattr(grading_execution, "ADK_AVAILABLE", True)
     monkeypatch.setattr(
         "ui.services.grading.types",
         types.SimpleNamespace(Content=FakeContent, Part=FakePart),
     )
-
-    from ui.services import grading
+    monkeypatch.setattr(
+        grading_execution,
+        "types",
+        types.SimpleNamespace(Content=FakeContent, Part=FakePart),
+    )
 
     st.session_state.rubric_json = json.dumps({"criteria": [{"name": "Q", "max_score": 1, "description": "d"}]})
     st.session_state.submission_text = "print('x')"
@@ -425,22 +460,39 @@ def test_run_grading_integration_facade_stream_mapper(monkeypatch):
                 }
             )
 
-    fake_runner = types.SimpleNamespace(
+    fake_runner_obj = types.SimpleNamespace(
         run_async=FakeRunner().run_async,
         session_service=types.SimpleNamespace(
             get_session=fake_get_session,
             create_session=fake_create_session,
         ),
     )
-
-    monkeypatch.setattr(grading, "runner", fake_runner)
-    monkeypatch.setattr(grading, "grading_app", types.SimpleNamespace(name="app"))
+    fake_app = types.SimpleNamespace(name="app")
+    
+    from ui.services import grading_lifecycle
+    from ui.services import grading_execution
+    
+    # Mock get_runner and get_app to return fake objects
+    monkeypatch.setattr(grading_lifecycle, "get_runner", lambda: fake_runner_obj)
+    monkeypatch.setattr(grading_lifecycle, "get_app", lambda: fake_app)
+    monkeypatch.setattr(grading_execution, "get_runner", lambda: fake_runner_obj)
+    monkeypatch.setattr(grading_execution, "get_app", lambda: fake_app)
+    
+    monkeypatch.setattr(grading, "runner", fake_runner_obj)
+    monkeypatch.setattr(grading, "grading_app", fake_app)
+    monkeypatch.setattr("ui.services.grading.ADK_AVAILABLE", True)
+    monkeypatch.setattr(grading_lifecycle, "ADK_AVAILABLE", True)
+    monkeypatch.setattr(grading_execution, "ADK_AVAILABLE", True)
     monkeypatch.setattr(
         grading,
         "types",
         types.SimpleNamespace(Content=FakeContent, Part=FakePart),
     )
-    monkeypatch.setattr(grading, "ADK_AVAILABLE", True)
+    monkeypatch.setattr(
+        grading_execution,
+        "types",
+        types.SimpleNamespace(Content=FakeContent, Part=FakePart),
+    )
 
     st.session_state.rubric_json = json.dumps(
         {"criteria": [{"name": "Q", "max_score": 1, "description": "d"}]}

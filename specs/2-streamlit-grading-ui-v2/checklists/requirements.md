@@ -46,6 +46,11 @@
 - [ ] Spec defines what raw data can be displayed (and what must be redacted)
 - [ ] Spec defines export format for event logs (e.g., JSON lines vs single JSON)
 
+## Configuration Features
+
+- [ ] Spec defines LLM Provider toggle (OpenAI vs Gemini) behavior and persistence
+- [ ] Spec defines when provider changes take effect (immediate vs next run)
+
 ## Testability
 
 - [x] Acceptance criteria are written in testable language

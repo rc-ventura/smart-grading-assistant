@@ -41,8 +41,11 @@
 ## Phase C: Stability (regrade + cancel + recovery)
 
 - [ ] UIV2-020 Fix regrade flow without restarting Streamlit (reset transient state, recreate session on "backend closed")
-- [ ] UIV2-021 Add "Cancel grading" action that stops event consumption safely
+- [x] UIV2-021 Add "Cancel grading" action that stops event consumption safely
 - [ ] UIV2-022 Ensure errors are recoverable (clear messaging + safe reset)
+
+**Testing**:
+- [x] Automated test for Cancel Flow (`tests/test_cancel_flow.py`) validating state reset and consumption stop.
 
 **Checkpoint**: Multiple runs work reliably without restarting Streamlit.
 
@@ -67,3 +70,9 @@
 
 - [ ] UIV2-050 Debug tab: toggle to show raw Runner events/state deltas
 - [ ] UIV2-051 Debug tab: export/download event log
+
+---
+
+## Phase F: Configuration Features
+
+- [x] UIV2-060 Add LLM Provider toggle in Sidebar (OpenAI vs Gemini) and ensure backend runner respects the selection (requires dynamic app initialization or runtime config injection).

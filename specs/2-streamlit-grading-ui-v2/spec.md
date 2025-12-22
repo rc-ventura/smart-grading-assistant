@@ -117,6 +117,18 @@ This spec builds on the existing ADK Runner integration and focuses on presentat
 - [ ] Debug tab can optionally show raw Runner event payloads/state deltas.
 - [ ] Debug tab can export/download the event log.
 
+### 3.7 Scenario: Configure LLM Provider (Configuration)
+
+**As a** teacher/developer
+**I want to** switch between OpenAI and Gemini models
+**So that** I can compare quality/cost or work around outages
+
+**Acceptance Criteria:**
+
+- [ ] Sidebar includes a toggle/selector for "LLM Provider" (OpenAI / Gemini).
+- [ ] Changing the provider updates the backend configuration for the *next* grading session.
+- [ ] UI clearly indicates which provider is currently active.
+
 ---
 
 ## 4. Functional Requirements
@@ -135,6 +147,8 @@ This spec builds on the existing ADK Runner integration and focuses on presentat
 #### 4.1.2 Sidebar (optional)
 
 If kept, the sidebar should focus on inputs (rubric/submission) and session metadata. Primary actions may also be surfaced in the Chat tab to reduce user context switching.
+
+**New:** Sidebar must include a "Settings" or "Configuration" section with the LLM Provider selector.
 
 ### 4.2 Event Streaming UX
 

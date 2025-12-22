@@ -4,105 +4,16 @@ import asyncio
 import logging
 from typing import List, Optional, Tuple
 
-from pydantic import ValidationError
-
 from google.adk.agents import BaseAgent, LlmAgent, ParallelAgent
-from google.adk.agents.invocation_context import InvocationContext
-from google.adk.events.event import Event
-from google.adk.utils.context_utils import Aclosing
 
 from config import GRADER_CONCURRENCY_LIMIT, retry_config
 from services.llm_provider import get_agent_generate_config_for, get_model
 from models.schemas import CriterionGrade
+from models.retry_agent import RetryingAgent
 from utils.text_utils import slugify
 
 
 _grader_semaphore = asyncio.Semaphore(GRADER_CONCURRENCY_LIMIT)
-
-
-class EmptyGraderOutputError(RuntimeError):
-    pass
-
-
-class RetryingGraderAgent(BaseAgent):
-    inner_agent: LlmAgent
-    output_key: str
-    criterion_name: str
-    max_score: int
-    semaphore: asyncio.Semaphore = _grader_semaphore
-    max_attempts: int = 3
-
-    def __getattr__(self, item: str):
-        try:
-            return super().__getattr__(item)
-        except AttributeError:
-            inner_agent = object.__getattribute__(self, "inner_agent")
-            if hasattr(inner_agent, item):
-                return getattr(inner_agent, item)
-            raise
-
-    async def _run_async_impl(self, ctx: InvocationContext):
-        last_error: Optional[Exception] = None
-        last_error_type: str = "validation"
-        for attempt in range(1, self.max_attempts + 1):
-            try:
-                ctx.end_of_agents.pop(self.inner_agent.name, None)
-            except Exception:
-                pass
-            saw_output = False
-            try:
-                async with self.semaphore:
-                    async with Aclosing(self.inner_agent.run_async(ctx)) as agen:
-                        async for event in agen:
-                            try:
-                                state_delta = getattr(getattr(event, "actions", None), "state_delta", None)
-                                if isinstance(state_delta, dict) and self.output_key in state_delta:
-                                    candidate = state_delta.get(self.output_key)
-                                    if isinstance(candidate, dict) and (
-                                        "score" in candidate or "criterion_name" in candidate
-                                    ):
-                                        saw_output = True
-                                    elif candidate is not None:
-                                        saw_output = True
-                            except Exception:
-                                pass
-                            yield event
-                if not saw_output:
-                    raise EmptyGraderOutputError(
-                        f"Empty or missing output for key '{self.output_key}'"
-                    )
-                return
-            except (ValidationError, EmptyGraderOutputError) as exc:
-                last_error = exc
-                if isinstance(exc, EmptyGraderOutputError):
-                    last_error_type = "empty_output"
-                else:
-                    last_error_type = "validation"
-                if attempt >= self.max_attempts:
-                    break
-                initial_delay = float(getattr(retry_config, "initial_delay", 1.0) or 1.0)
-                exp_base = float(getattr(retry_config, "exp_base", 2.0) or 2.0)
-                delay = min(10.0, initial_delay * (exp_base ** (attempt - 1)))
-                await asyncio.sleep(delay)
-
-        error_payload = {
-            "error_type": last_error_type,
-            "error_message": str(last_error) if last_error else "Unknown validation error",
-            "recoverable": True,
-            "suggestion": "Retry grading for this criterion.",
-            "attempts": self.max_attempts,
-            "criterion_name": self.criterion_name,
-            "max_score": self.max_score,
-        }
-
-        error_key = f"{self.output_key}_error"
-        event = Event(
-            invocation_id=ctx.invocation_id,
-            author=self.name,
-            branch=ctx.branch,
-        )
-        event.actions.state_delta[error_key] = error_payload
-        yield event
 
 
 def create_criterion_grader(
@@ -152,15 +63,19 @@ Focus ONLY on this criterion. Do NOT include any text outside the JSON structure
         output_key=output_key,
     )
 
-    return RetryingGraderAgent(
+    retrying_agent = RetryingAgent(
         name=grader_name,
         description=inner_agent.description,
         inner_agent=inner_agent,
         output_key=output_key,
-        criterion_name=criterion_name,
-        max_score=max_score,
         max_attempts=max(1, int(getattr(retry_config, "attempts", 3) or 3)),
+        additional_error_info={
+            "criterion_name": criterion_name,
+            "max_score": max_score,
+        },
     )
+
+    return retrying_agent
 
 
 def build_graders_from_rubric(rubric: dict) -> Tuple[List[BaseAgent], List[str]]:

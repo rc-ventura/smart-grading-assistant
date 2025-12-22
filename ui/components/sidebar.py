@@ -9,14 +9,36 @@ import streamlit as st
 def render_sidebar(
     on_start_grading: Callable[[], None],
     on_reset: Callable[[], None],
+    on_cancel: Callable[[], None] = None,
 ) -> None:
     """Render the sidebar with rubric/submission inputs and actions.
     
     Args:
         on_start_grading: Callback when "Start Grading" is clicked
         on_reset: Callback when "Reset" is clicked
+        on_cancel: Callback when "Cancel Grading" is clicked
     """
     st.header("📋 Setup")
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Provider Selection
+    # ─────────────────────────────────────────────────────────────────────────
+    st.subheader("Model Provider")
+
+    def _on_provider_change():
+        from ui.services.grading import invalidate_runner
+
+        invalidate_runner()
+
+    st.radio(
+        "Provider",
+        options=["gemini", "openai"],
+        format_func=lambda p: "Gemini" if p == "gemini" else "OpenAI",
+        key="llm_provider",
+        horizontal=True,
+        disabled=st.session_state.grading_in_progress,
+        on_change=_on_provider_change,
+    )
     
     # ─────────────────────────────────────────────────────────────────────────
     # Rubric Input Section
@@ -125,13 +147,23 @@ def render_sidebar(
     col1, col2 = st.columns(2)
     
     with col1:
-        st.button(
-            "🚀 Start Grading",
-            on_click=on_start_grading,
-            disabled=not can_start,
-            type="primary",
-            width='stretch',
-        )
+        if st.session_state.grading_in_progress and on_cancel:
+            st.button(
+                "🛑 Cancel",
+                on_click=on_cancel,
+                type="primary",
+                width='stretch',
+                key="cancel_grading_btn"
+            )
+        else:
+            st.button(
+                "🚀 Start Grading",
+                on_click=on_start_grading,
+                disabled=not can_start,
+                type="primary",
+                width='stretch',
+                key="start_grading_btn"
+            )
     
     with col2:
         st.button(

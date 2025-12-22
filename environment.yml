@@ -10,6 +10,6 @@ dependencies:
       - google-genai
       - python-dotenv
       - sqlalchemy
-      - streamlit
+      - streamlit>=1.52.0
       - litellm
       - pytest

@@ -1,11 +1,19 @@
 import json
-
 import streamlit as st
+from ui.components.chat import add_message, render_chat
+from ui.services.grading import run_grading
 
 
 def consume_grading_events(chat_slot, results_slot) -> None:
-    from ui.components.chat import add_message, render_chat
-    from ui.services.grading import run_grading
+   
+    if st.session_state.get("cancel_requested"):
+        st.session_state.cancel_requested = False
+        st.session_state.grading_in_progress = False
+        st.session_state.current_step = "idle"
+        st.session_state.pending_approval = False
+        st.session_state.approval_decision = None
+        add_message("assistant", "🛑 Grading cancelled by user.")
+        st.rerun()
 
     def _event_key(event: dict) -> str:
         event_type = event.get("type", "")
@@ -43,6 +51,15 @@ def consume_grading_events(chat_slot, results_slot) -> None:
 
     try:
         for event in run_grading():
+            if st.session_state.get("cancel_requested"):
+                st.session_state.cancel_requested = False
+                st.session_state.grading_in_progress = False
+                st.session_state.current_step = "idle"
+                st.session_state.pending_approval = False
+                st.session_state.approval_decision = None
+                add_message("assistant", "🛑 Grading cancelled by user.")
+                break
+
             event_type = event.get("type", "")
             step = event.get("step", "")
             data = event.get("data", {})

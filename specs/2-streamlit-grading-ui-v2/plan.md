@@ -48,26 +48,31 @@ Improve the Streamlit grading UI into a chat-first, non-blocking experience with
 
 ## Milestones
 
-### Milestone 1: UX skeleton (tabs + basic containers)
+### Milestone 1: UX skeleton (tabs + basic containers) ✅
+- [x] Add tabs and move existing content into them without changing core behavior.
+- [x] Create stable placeholders in Chat tab for progress + event feed.
 
-- Add tabs and move existing content into them without changing core behavior.
-- Create stable placeholders in Chat tab for progress + event feed.
+### Milestone 2: Incremental updates + progress clarity ✅
+- [x] Reduce chat noise/duplication.
+- [x] Show per-criterion updates as they arrive.
+- [x] Ensure UI never appears frozen.
 
-### Milestone 2: Incremental updates + progress clarity
+### Milestone 3: Approval Flow (Human-in-the-Loop) ✅
+- [x] Implement approval modal/flow (<50% or >90%) with confirm/adjust grade.
+- [x] Integrate with session persistence for reliable resume.
 
-- Reduce chat noise/duplication.
-- Show per-criterion updates as they arrive.
-- Ensure UI never appears frozen.
+### Milestone 4: Stability for repeated runs (Current Focus)
+- [ ] Fix regrade without restart (session recreation, state reset discipline).
+- [ ] Add cancel flow (partial/needs refinement).
 
-### Milestone 3: Stability for repeated runs
+### Milestone 5: Debug + tests
+- [ ] Debug tab event log + export.
+- [ ] Automated E2E smoke test.
 
-- Fix regrade without restart (session recreation, state reset discipline).
-- Add cancel flow.
-
-### Milestone 4: Debug + tests
-
-- Debug tab event log + export.
-- Automated E2E smoke test.
+### Milestone 6: Configuration Features (Phase F)
+- [ ] Add LLM Provider toggle in Sidebar (OpenAI vs Gemini).
+- [ ] Refactor `agent.py` to support dynamic app/runner initialization based on selected provider.
+- [ ] Update `ui/services/grading.py` to invalidate/recreate runner when provider changes.
 
 ---
 
