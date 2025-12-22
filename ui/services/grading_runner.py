@@ -139,6 +139,12 @@ async def run_runner_events(
     if st.session_state.get("pending_approval"):
         return
 
+    # Clear approval state after successful resume
+    st.session_state.approval_reason = None
+    st.session_state.requested_tool_confirmations = None
+    st.session_state.last_invocation_id = None
+    st.session_state.approval_decision = None
+
     yield {
         "type": "event",
         "data": {

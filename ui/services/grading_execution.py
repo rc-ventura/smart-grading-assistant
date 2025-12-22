@@ -79,11 +79,35 @@ def run_grading() -> Generator[dict[str, Any], None, None]:
 
         approval_decision = st.session_state.get("approval_decision")
         invocation_id = st.session_state.get("last_invocation_id")
+        requested_confirmations = st.session_state.get("requested_tool_confirmations")
 
-        if approval_decision and invocation_id:
-            st.session_state.approval_decision = None
+        if approval_decision and invocation_id and requested_confirmations:
             
-            msg = types.Content(role="user", parts=[types.Part(text=f"User decision: {approval_decision}")])
+            # Build FunctionResponse for each requested confirmation
+            function_responses = []
+            for call_id, confirmation_details in requested_confirmations.items():
+                # Extract the actual function call ID (remove any prefix)
+                actual_call_id = call_id
+                
+                # Create FunctionResponse with adk_request_confirmation
+                func_response = types.FunctionResponse(
+                    name="adk_request_confirmation",
+                    id=actual_call_id,
+                    response={
+                        "confirmed": approval_decision == "approved"
+                    }
+                )
+                function_responses.append(func_response)
+            
+            # Prevent re-sending the same confirmation on rerun
+            st.session_state.requested_tool_confirmations = None
+            st.session_state.pending_approval = False
+
+            # Create Content with FunctionResponse parts
+            msg = types.Content(
+                role="user",
+                parts=[types.Part(function_response=fr) for fr in function_responses]
+            )
             
             agen = _consume_and_yield(resume_runner_with_confirmation(
                 invocation_id,

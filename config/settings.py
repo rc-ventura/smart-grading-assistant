@@ -41,8 +41,8 @@ APP_NAME = "capstone"
 USER_ID = "teacher_01"
 
 # Grading thresholds
-FAILING_THRESHOLD = 50
-EXCEPTIONAL_THRESHOLD = 80
+FAILING_THRESHOLD = 60
+EXCEPTIONAL_THRESHOLD = 90
 
 # Retry configuration for LLM calls
 retry_config = types.HttpRetryOptions(

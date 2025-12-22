@@ -18,6 +18,7 @@ def render_results() -> None:
     
     # Only show results when grading is complete
     if st.session_state.current_step != "complete":
+        st.info("Grading is not complete yet")
         st.container()
         return
     
@@ -45,6 +46,7 @@ def render_results() -> None:
 
 def render_reports() -> None:
     if st.session_state.current_step != "complete":
+        st.info("Reports are not available yet")
         st.container()
         return
 

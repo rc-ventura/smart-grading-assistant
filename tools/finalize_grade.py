@@ -26,7 +26,17 @@ def finalize_grade(
     Returns:
         Confirmation that grade was finalized
     """
-    return {
+    # Check if already finalized to avoid double approval
+    if tool_context is not None:
+        try:
+            existing_approval = tool_context.state.get("approval_result")
+            if existing_approval is not None:
+                # Already approved, just return the existing result
+                return existing_approval
+        except Exception:
+            pass
+    
+    result = {
         "status": "finalized",
         "final_score": final_score,
         "max_score": max_score,
@@ -35,6 +45,15 @@ def finalize_grade(
         "reason": reason,
         "message": f"Grade {letter_grade} ({percentage}%) has been finalized.",
     }
+    
+    # Store in state for future checks
+    if tool_context is not None:
+        try:
+            tool_context.state["approval_result"] = result
+        except Exception:
+            pass
+    
+    return result
 
 
 async def needs_approval(
@@ -46,6 +65,14 @@ async def needs_approval(
     tool_context: ToolContext | None = None,
 ) -> bool:
     """Returns True if the grade requires human approval."""
+
+    # If already approved/finalized in this ADK session context, do not ask again.
+    if tool_context is not None:
+        try:
+            if tool_context.state.get("approval_result") is not None:
+                return False
+        except Exception:
+            pass
 
     if tool_context is not None:
         try:

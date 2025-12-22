@@ -58,7 +58,12 @@ def create_grading_runner(*, provider: str = "gemini") -> tuple[Runner, App]:
     fresh_graders = ParallelAgent(name="ParallelGraders", sub_agents=[])
     
     grading_pipeline = create_grading_pipeline(aggregator, approval, feedback, graders=fresh_graders)
-    root = create_root_agent(model, rubric_validator, grading_pipeline)
+    
+    root = create_root_agent(
+        model=model, 
+        rubric_validator=rubric_validator, 
+        grading_pipeline_agent=grading_pipeline,
+    )
     
     # Create App with fresh agents
     grading_app = App(

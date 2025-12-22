@@ -32,8 +32,8 @@ def create_grading_pipeline(aggregator, approval, feedback, graders=None):
         sub_agents=[
             graders,
             aggregator,
-            approval,
             feedback,
+            approval,
         ],
     )
 
