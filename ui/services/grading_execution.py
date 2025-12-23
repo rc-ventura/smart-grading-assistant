@@ -11,7 +11,7 @@ from ui.services.grading_runner import (
     run_runner_events as run_runner_events_impl, 
     resume_runner_with_confirmation
 )
-from ui.services.grading_lifecycle import get_runner, get_app
+from ui.services.grading_lifecycle import get_runner, get_app, reset_grading_state
 
 try:
     from google.genai import types
@@ -37,6 +37,11 @@ async def run_runner_events(rubric_json: str, submission_text: str) -> AsyncGene
 
 def run_grading() -> Generator[dict[str, Any], None, None]:
     """Execute the grading pipeline and yield events for UI updates."""
+    # Clean transient state for a new run 
+    if not st.session_state.get("grading_in_progress"):
+        reset_grading_state()
+    st.session_state.grading_in_progress = True
+
     rubric_json = st.session_state.rubric_json
     submission_text = st.session_state.submission_text
 
@@ -53,6 +58,11 @@ def run_grading() -> Generator[dict[str, Any], None, None]:
     runner = get_runner()
     app = get_app()
     if not runner:
+        st.session_state.grading_in_progress = False
+        st.session_state.grades = {}
+        st.session_state.final_score = None
+        st.session_state.feedback = None
+        st.session_state.current_step = None
         yield {
             "type": "error",
             "step": "runner",
@@ -138,6 +148,8 @@ def run_grading() -> Generator[dict[str, Any], None, None]:
                 break
         return
     except Exception as e:
+        # Safe reset for recoverable errors 
+        reset_grading_state()
         yield {"type": "error", "step": "runner", "data": {"message": f"Backend error: {e}"}}
         return
     finally:

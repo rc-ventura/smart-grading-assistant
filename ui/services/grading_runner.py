@@ -2,6 +2,7 @@ import uuid
 from typing import Any, AsyncGenerator
 
 import streamlit as st
+from ui.services.grading_lifecycle import invalidate_runner, reset_grading_state
 
 
 async def run_runner_events(
@@ -19,17 +20,31 @@ async def run_runner_events(
     user_id = "teacher"
     session_id = st.session_state.grading_session_id
 
-    session = await runner.session_service.get_session(
-        app_name=grading_app.name,
-        user_id=user_id,
-        session_id=session_id,
-    )
-    if session is None:
-        session = await runner.session_service.create_session(
+    try:
+        session = await runner.session_service.get_session(
             app_name=grading_app.name,
             user_id=user_id,
             session_id=session_id,
         )
+        if session is None:
+            session = await runner.session_service.create_session(
+                app_name=grading_app.name,
+                user_id=user_id,
+                session_id=session_id,
+            )
+    except Exception as e:
+        # Backend closed or session service unavailable: reset and ask user to retry
+        invalidate_runner()
+        reset_grading_state()
+        yield {
+            "type": "event",
+            "data": {
+                "type": "error",
+                "step": "runner",
+                "data": {"message": f"Backend closed or unavailable: {e}. Session was reset; please retry."},
+            },
+        }
+        return
 
     st.session_state.grading_session_id = session.id
 
@@ -94,46 +109,59 @@ async def run_runner_events(
     started_aggregating = False
     started_feedback = False
 
-    async for event in runner.run_async(
-        user_id=user_id,
-        session_id=session.id,
-        new_message=types.Content(role="user", parts=[types.Part(text=submission_text)]),
-    ):
-        invocation_id = getattr(event, "invocation_id", None)
-        
-        try:
-            state_delta = getattr(getattr(event, "actions", None), "state_delta", None)
-            if isinstance(state_delta, dict):
-                if not started_aggregating and "aggregation_result" in state_delta:
-                    started_aggregating = True
-                    yield {
-                        "type": "event",
-                        "invocation_id": invocation_id,
-                        "data": {
-                            "type": "step_start",
-                            "step": "aggregating",
-                            "data": {"message": "Aggregating scores..."},
-                        },
-                    }
-                if not started_feedback and "final_feedback" in state_delta:
-                    started_feedback = True
-                    yield {
-                        "type": "event",
-                        "invocation_id": invocation_id,
-                        "data": {
-                            "type": "step_start",
-                            "step": "feedback",
-                            "data": {"message": "Generating feedback..."},
-                        },
-                    }
-        except Exception:
-            pass
+    try:
+        async for event in runner.run_async(
+            user_id=user_id,
+            session_id=session.id,
+            new_message=types.Content(role="user", parts=[types.Part(text=submission_text)]),
+        ):
+            invocation_id = getattr(event, "invocation_id", None)
+            
+            try:
+                state_delta = getattr(getattr(event, "actions", None), "state_delta", None)
+                if isinstance(state_delta, dict):
+                    if not started_aggregating and "aggregation_result" in state_delta:
+                        started_aggregating = True
+                        yield {
+                            "type": "event",
+                            "invocation_id": invocation_id,
+                            "data": {
+                                "type": "step_start",
+                                "step": "aggregating",
+                                "data": {"message": "Aggregating scores..."},
+                            },
+                        }
+                    if not started_feedback and "final_feedback" in state_delta:
+                        started_feedback = True
+                        yield {
+                            "type": "event",
+                            "invocation_id": invocation_id,
+                            "data": {
+                                "type": "step_start",
+                                "step": "feedback",
+                                "data": {"message": "Generating feedback..."},
+                            },
+                        }
+            except Exception:
+                pass
 
+            yield {
+                "type": "event", 
+                "invocation_id": invocation_id,
+                "data": event
+            }
+    except Exception as e:
+        invalidate_runner()
+        reset_grading_state()
         yield {
-            "type": "event", 
-            "invocation_id": invocation_id,
-            "data": event
+            "type": "event",
+            "data": {
+                "type": "error",
+                "step": "runner",
+                "data": {"message": f"Backend error during grading: {e}. Session was reset; please retry."},
+            },
         }
+        return
 
     # If we are pending approval, do NOT yield completion event
     if st.session_state.get("pending_approval"):

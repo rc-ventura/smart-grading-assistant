@@ -18,6 +18,22 @@ except Exception:
 # Backwards-compatible public runner attribute
 runner = _default_runner
 
+def reset_grading_state() -> None:
+    """Reset transient grading state to allow clean regrade without restarting Streamlit."""
+    # Approval / resume
+    st.session_state.pending_approval = False
+    st.session_state.approval_decision = None
+    st.session_state.approval_reason = None
+    st.session_state.requested_tool_confirmations = None
+    st.session_state.last_invocation_id = None
+    st.session_state.approval_followup = None
+    # Results and flags
+    st.session_state.grading_in_progress = False
+    st.session_state.final_score = None
+    st.session_state.grades = None
+    st.session_state.feedback = None
+    st.session_state.current_step = None
+
 def invalidate_runner() -> None:
     """Drop cached runner/app so a new one is created on next access.
     
@@ -36,6 +52,7 @@ def invalidate_runner() -> None:
     st.session_state.approval_decision = None
     st.session_state.pending_approval = False
     st.session_state.requested_tool_confirmations = None
+    st.session_state.approval_followup = None
 
 
 def get_app():
