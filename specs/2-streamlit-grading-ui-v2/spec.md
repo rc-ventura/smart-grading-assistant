@@ -33,8 +33,8 @@ This spec builds on the existing ADK Runner integration and focuses on presentat
 
 ## 2. Actors
 
-| Actor | Description |
-| --- | --- |
+| Actor             | Description                                                                                                                         |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **Teacher** | Uses the UI to upload rubric/submission, trigger grading, monitor progress, review results, and optionally approve edge-case grades |
 
 ---
@@ -87,9 +87,9 @@ This spec builds on the existing ADK Runner integration and focuses on presentat
 
 **Acceptance Criteria:**
 
-- [ ] UI offers “Cancel grading” while a run is in progress.
-- [ ] Cancel stops consuming Runner events and resets UI to a safe state.
-- [ ] Cancellation does not require restarting Streamlit.
+- [X] UI offers “Cancel grading” while a run is in progress.
+- [X] Cancel stops consuming Runner events and resets UI to a safe state.
+- [X] Cancellation does not require restarting Streamlit.
 
 ### 3.5 Scenario: Human-in-the-Loop approval (migrated)
 
@@ -100,10 +100,10 @@ This spec builds on the existing ADK Runner integration and focuses on presentat
 **Acceptance Criteria:**
 
 - [X] UI surfaces that approval is required (warning/banner) and displays the backend-provided reason when available.
-- [ ] UI shows approval modal when grade is < 50% or > 90%.
-- [ ] Modal displays the reason for requiring approval.
+- [X] UI shows approval modal when grade is < 50% or > 90%.
+- [X] Modal displays the reason for requiring approval.
 - [ ] Teacher can accept the grade as-is or adjust it.
-- [ ] Decision is sent back to backend for finalization.
+- [X] Decision is sent back to backend for finalization.
 
 ### 3.6 Scenario: Debugging / observability
 
@@ -125,9 +125,9 @@ This spec builds on the existing ADK Runner integration and focuses on presentat
 
 **Acceptance Criteria:**
 
-- [ ] Sidebar includes a toggle/selector for "LLM Provider" (OpenAI / Gemini).
-- [ ] Changing the provider updates the backend configuration for the *next* grading session.
-- [ ] UI clearly indicates which provider is currently active.
+- [X] Sidebar includes a toggle/selector for "LLM Provider" (OpenAI / Gemini).
+- [X] Changing the provider updates the backend configuration for the *next* grading session.
+- [X] UI clearly indicates which provider is currently active.
 
 ---
 
@@ -137,12 +137,12 @@ This spec builds on the existing ADK Runner integration and focuses on presentat
 
 #### 4.1.1 Tabs
 
-| Tab | Purpose | Contents |
-| --- | --- | --- |
-| **Chat** | Primary experience | Chat history, progress indicator, per-criterion updates, start/cancel actions |
-| **Results** | Review output | Scores table, final score summary, feedback rendering |
-| **Debug** | Troubleshoot | Raw events/state deltas (toggle), event log, diagnostics |
-| **Reports** | Export output | Download/export actions (JSON report, feedback text) |
+| Tab               | Purpose            | Contents                                                                      |
+| ----------------- | ------------------ | ----------------------------------------------------------------------------- |
+| **Chat**    | Primary experience | Chat history, progress indicator, per-criterion updates, start/cancel actions |
+| **Results** | Review output      | Scores table, final score summary, feedback rendering                         |
+| **Debug**   | Troubleshoot       | Raw events/state deltas (toggle), event log, diagnostics                      |
+| **Reports** | Export output      | Download/export actions (JSON report, feedback text)                          |
 
 #### 4.1.2 Sidebar (optional)
 
@@ -185,11 +185,11 @@ If kept, the sidebar should focus on inputs (rubric/submission) and session meta
 
 ## 6. Success Criteria
 
-| Criterion | Measurement | Target |
-| --- | --- | --- |
-| Non-blocking UX | User sees progress while grading | Always |
-| Regrade reliability | User can run multiple sessions without restart | Always |
-| Clarity | User can find results without scrolling chat | Tabs + clear summaries |
+| Criterion           | Measurement                                    | Target                 |
+| ------------------- | ---------------------------------------------- | ---------------------- |
+| Non-blocking UX     | User sees progress while grading               | Always                 |
+| Regrade reliability | User can run multiple sessions without restart | Always                 |
+| Clarity             | User can find results without scrolling chat   | Tabs + clear summaries |
 
 ---
 
