@@ -53,6 +53,8 @@ class AggregationResult(BaseModel):
     grade_details: List[GradeDetail] = Field(description="Individual criterion grades")
     requires_human_approval: bool = Field(description="Whether human review is needed")
     approval_reason: Optional[str] = Field(default=None, description="Reason for requiring approval")
+    requires_human_intervention: bool = Field(default=False, description="Optimized HIT flow: True if anomaly detected")
+    anomaly_reason: Optional[str] = Field(default=None, description="Optimized HIT flow: Reason for anomaly")
 
 
 class FinalFeedback(BaseModel):

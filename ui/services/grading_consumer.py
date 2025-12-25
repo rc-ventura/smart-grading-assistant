@@ -153,6 +153,29 @@ def consume_grading_events(chat_slot, results_slot) -> None:
                 st.session_state.current_step = "complete"
                 add_message("assistant", "✅ Grading complete! Review the results below.")
 
+            elif event_type == "approval_action":
+                action = None
+                if isinstance(data, dict):
+                    action = data.get("action")
+                if action == "approved":
+                    add_message("assistant", "🛡️ Approval: ✅ approved (resuming workflow)")
+                elif action == "manual_adjust":
+                    score = data.get("final_score") if isinstance(data, dict) else None
+                    letter = data.get("letter_grade") if isinstance(data, dict) else None
+                    suffix = ""
+                    if score is not None or letter:
+                        suffix = f" ({score} / {letter})"
+                    add_message(
+                        "assistant",
+                        f"🛡️ Approval: ✏️ manual adjust{suffix} (finalizing without feedback agent)",
+                    )
+                elif action == "regrade":
+                    add_message("assistant", "🛡️ Approval: 🔄 regrade requested (restarting cycle)")
+                elif action == "cancelled":
+                    add_message("assistant", "🛡️ Approval: ↩️ cancelled")
+                else:
+                    add_message("assistant", f"🛡️ Approval action: {action}")
+
             elif event_type == "approval_finalized":
                 data = event.get("data", {})
                 msg = data.get("message", "Grade finalized.")
