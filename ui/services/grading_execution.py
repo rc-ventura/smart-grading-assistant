@@ -62,7 +62,7 @@ def run_grading() -> Generator[dict[str, Any], None, None]:
         st.session_state.grades = {}
         st.session_state.final_score = None
         st.session_state.feedback = None
-        st.session_state.current_step = None
+        st.session_state.current_step = "idle"
         yield {
             "type": "error",
             "step": "runner",
@@ -124,6 +124,8 @@ def run_grading() -> Generator[dict[str, Any], None, None]:
         st.session_state.requested_tool_confirmations = None
         st.session_state.last_invocation_id = None
         st.session_state.approval_decision = None
+        st.session_state.approval_followup = None
+        st.session_state.regrade_comment = ""
         st.session_state.grading_in_progress = False
         st.session_state.current_step = "complete"
 
@@ -152,6 +154,8 @@ def run_grading() -> Generator[dict[str, Any], None, None]:
         st.session_state.approval_decision = None
         st.session_state.approval_reason = None
         st.session_state._pending_approval_notified = False
+        st.session_state.approval_followup = None
+        st.session_state.regrade_comment = ""
 
         st.session_state.grades = {}
         st.session_state.final_score = None

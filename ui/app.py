@@ -1,4 +1,5 @@
 import copy
+import json
 import os
 import sys
 
@@ -22,9 +23,13 @@ st.set_page_config(
 # ─────────────────────────────────────────────────────────────────────────────
 # Gemini Client Initialization
 # ─────────────────────────────────────────────────────────────────────────────
-GEMINI_API_KEY = st.secrets["GOOGLE_API_KEY"]
+try:
+    GEMINI_API_KEY = st.secrets["GOOGLE_API_KEY"]
+except Exception:
+    GEMINI_API_KEY = None
+
 if "genai_client" not in st.session_state:
-    st.session_state.genai_client = genai.Client(api_key=GEMINI_API_KEY)
+    st.session_state.genai_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Session State Initialization (from spec)
@@ -66,12 +71,17 @@ DEFAULT_STATE = {
     "approval_reason": None,
     "requested_tool_confirmations": None,
     "last_invocation_id": None,
+    "approval_followup": None,
+    "regrade_comment": "",
     
     # Cancel state
     "cancel_requested": False,
     
     # Error state
     "error_message": None,
+
+    # Debug
+    "debug_show_raw_events": False,
 
     # LLM provider selection
     "llm_provider": "gemini",
@@ -122,6 +132,8 @@ def start_grading():
     st.session_state.approval_reason = None
     st.session_state.requested_tool_confirmations = None
     st.session_state.last_invocation_id = None
+    st.session_state.approval_followup = None
+    st.session_state.regrade_comment = ""
     st.session_state.cancel_requested = False
     st.session_state.error_message = None
     st.session_state.current_step = "idle"
@@ -202,19 +214,44 @@ with main_area:
 
     with tab_debug:
         with debug_slot.container():
-            with st.expander("Debug: Session State", expanded=False):
-                st.json({
-                    "setup_complete": st.session_state.setup_complete,
-                    "rubric_valid": st.session_state.rubric_valid,
-                    "submission_loaded": st.session_state.submission_text is not None,
-                    "current_step": st.session_state.current_step,
-                    "grading_in_progress": st.session_state.grading_in_progress,
-                    "pending_approval": st.session_state.pending_approval,
-                    "approval_decision": st.session_state.approval_decision,
-                    "last_invocation_id": st.session_state.last_invocation_id,
-                    "grades": st.session_state.grades,
-                    "final_score": st.session_state.final_score,
-                })
+            st.checkbox(
+                "Show raw events / state",
+                key="debug_show_raw_events",
+            )
+
+            if st.session_state.get("debug_show_raw_events"):
+                with st.expander("Debug: Session State", expanded=False):
+                    st.json(
+                        {
+                            "setup_complete": st.session_state.setup_complete,
+                            "rubric_valid": st.session_state.rubric_valid,
+                            "submission_loaded": st.session_state.submission_text is not None,
+                            "current_step": st.session_state.current_step,
+                            "grading_in_progress": st.session_state.grading_in_progress,
+                            "pending_approval": st.session_state.pending_approval,
+                            "approval_reason": st.session_state.approval_reason,
+                            "approval_decision": st.session_state.approval_decision,
+                            "approval_followup": st.session_state.get("approval_followup"),
+                            "last_invocation_id": st.session_state.last_invocation_id,
+                            "requested_tool_confirmations": st.session_state.get(
+                                "requested_tool_confirmations"
+                            ),
+                            "grades": st.session_state.grades,
+                            "final_score": st.session_state.final_score,
+                            "feedback": st.session_state.feedback,
+                            "error_message": st.session_state.error_message,
+                        }
+                    )
+
+                with st.expander("Debug: Event Log", expanded=False):
+                    event_log = st.session_state.get("event_log") or []
+                    st.download_button(
+                        "Download event log (JSON)",
+                        data=json.dumps(event_log, indent=2, sort_keys=True, default=str),
+                        file_name="smart_grading_event_log.json",
+                        mime="application/json",
+                    )
+                    st.json(event_log)
             
            
 

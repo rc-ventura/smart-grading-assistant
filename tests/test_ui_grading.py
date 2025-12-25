@@ -301,6 +301,115 @@ def test_map_runner_event_applies_state_delta_and_tool_confirmations(monkeypatch
     assert st.session_state.approval_reason == "edge"
 
 
+def test_map_runner_event_invalid_rubric_validation_sets_errors(monkeypatch):
+    repo_root = Path(__file__).resolve().parents[2]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
+    import streamlit as st
+    setup_state(st)
+
+    from ui.services import grading
+
+    class FakeActions:
+        def __init__(self, *, state_delta: dict[str, Any] | None = None):
+            self.state_delta = state_delta or {}
+            self.requested_tool_confirmations = {}
+
+    class FakeEvent:
+        def __init__(self, *, actions: FakeActions):
+            self.actions = actions
+            self.author = "agent"
+            self.content = None
+
+    delta = {"rubric_validation": {"status": "invalid", "errors": ["missing criteria"]}}
+    mapped = grading.map_runner_event(FakeEvent(actions=FakeActions(state_delta=delta)))
+
+    assert mapped["type"] == "event" or mapped["type"] in {"step_complete", "criterion_graded", "event"}
+    assert st.session_state.rubric_valid is False
+    assert st.session_state.rubric_errors == ["missing criteria"]
+
+
+def test_map_runner_event_grade_error_triggers_pending_approval(monkeypatch):
+    repo_root = Path(__file__).resolve().parents[2]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
+    import streamlit as st
+    setup_state(st)
+
+    from ui.services import grading
+
+    class FakeActions:
+        def __init__(self, *, state_delta: dict[str, Any] | None = None):
+            self.state_delta = state_delta or {}
+            self.requested_tool_confirmations = {}
+
+    class FakeEvent:
+        def __init__(self, *, actions: FakeActions):
+            self.actions = actions
+            self.author = "agent"
+            self.content = None
+
+    delta = {
+        "grade_docs_error": {
+            "criterion_name": "Docs",
+            "max_score": 10,
+            "error_message": "timeout",
+        }
+    }
+
+    mapped = grading.map_runner_event(FakeEvent(actions=FakeActions(state_delta=delta)))
+
+    assert mapped["type"] == "criterion_graded"
+    assert mapped["step"] == "grading"
+    assert mapped["data"]["criterion_name"] == "Docs"
+    assert mapped["data"]["score"] == 0
+    assert mapped["data"]["max_score"] == 10
+    assert st.session_state.pending_approval is True
+    assert isinstance(st.session_state.approval_reason, str)
+    assert "Docs" in st.session_state.grades
+
+
+def test_map_runner_event_aggregation_requires_human_intervention_sets_pending_approval(monkeypatch):
+    repo_root = Path(__file__).resolve().parents[2]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
+    import streamlit as st
+    setup_state(st)
+
+    from ui.services import grading
+
+    class FakeActions:
+        def __init__(self, *, state_delta: dict[str, Any] | None = None):
+            self.state_delta = state_delta or {}
+            self.requested_tool_confirmations = {}
+
+    class FakeEvent:
+        def __init__(self, *, actions: FakeActions):
+            self.actions = actions
+            self.author = "agent"
+            self.content = None
+
+    delta = {
+        "aggregation_result": {
+            "total_score": 1,
+            "max_possible": 10,
+            "percentage": 10.0,
+            "letter_grade": "F",
+            "requires_human_intervention": True,
+            "anomaly_reason": "suspicious score",
+        }
+    }
+
+    mapped = grading.map_runner_event(FakeEvent(actions=FakeActions(state_delta=delta)))
+    assert mapped["type"] == "step_complete"
+    assert mapped["step"] == "aggregating"
+    assert st.session_state.pending_approval is True
+    assert st.session_state.approval_reason == "suspicious score"
+
+
 def test_runner_creates_session_when_missing(monkeypatch):
     repo_root = Path(__file__).resolve().parents[2]
     if str(repo_root) not in sys.path:

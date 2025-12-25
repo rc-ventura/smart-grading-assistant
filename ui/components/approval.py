@@ -27,6 +27,8 @@ def render_approval_tab(on_approve: Optional[Callable] = None, on_reject: Option
         horizontal=True,
     )
 
+    followup = st.session_state.get("approval_followup")
+
     manual_score = None
     manual_letter = None
     manual_feedback = None
@@ -68,6 +70,8 @@ def render_approval_tab(on_approve: Optional[Callable] = None, on_reject: Option
 
             st.session_state.pending_approval = False
             st.session_state.grading_in_progress = True
+            st.session_state.approval_followup = None
+            st.session_state.regrade_comment = ""
 
             if on_approve:
                 on_approve()
@@ -75,12 +79,58 @@ def render_approval_tab(on_approve: Optional[Callable] = None, on_reject: Option
             st.rerun()
             
     with col2:
-        if st.button("↩️ Cancel & Finalize", type="secondary", width='stretch'):
-            st.session_state.approval_decision = "cancelled"
-            st.session_state.pending_approval = False
-            st.session_state.grading_in_progress = True
-            
-            if on_reject:
-                on_reject()
-                
+        if st.button("❌ Reject", type="secondary", width="stretch"):
+            st.session_state.approval_followup = {
+                "stage": "choose_action",
+                "comment": st.session_state.get("regrade_comment", ""),
+            }
             st.rerun()
+
+    if isinstance(followup, dict) and followup.get("stage") == "choose_action":
+        st.divider()
+        st.subheader("Reject: choose what to do")
+
+        reject_action = st.radio(
+            "Rejection Action",
+            options=["Manual Adjust", "Regrade"],
+            key="_approval_reject_action",
+            horizontal=True,
+        )
+
+        comment = st.text_area(
+            "Optional comment (why you are rejecting / what to change)",
+            value=str(st.session_state.get("regrade_comment", "")),
+            key="_approval_reject_comment",
+        )
+
+        c1, c2 = st.columns(2)
+        with c1:
+            label = "✏️ Apply Manual Adjust" if reject_action == "Manual Adjust" else "🔄 Apply Regrade"
+            if st.button(label, type="primary", width="stretch", key="_approval_reject_apply"):
+                st.session_state.regrade_comment = comment
+
+                if reject_action == "Manual Adjust":
+                    st.session_state.approval_decision = "manual_adjust"
+                    if manual_score is None:
+                        st.session_state.manual_final_score = None
+                    else:
+                        st.session_state.manual_final_score = float(manual_score)
+                    st.session_state.manual_letter_grade = manual_letter
+                    st.session_state.manual_feedback = manual_feedback
+                else:
+                    st.session_state.approval_decision = "regrade"
+
+                st.session_state.pending_approval = False
+                st.session_state.grading_in_progress = True
+                st.session_state.approval_followup = None
+
+                if on_reject:
+                    on_reject()
+
+                st.rerun()
+
+        with c2:
+            if st.button("↩️ Back", type="secondary", width="stretch", key="_approval_reject_back"):
+                st.session_state.approval_followup = None
+                st.session_state.regrade_comment = ""
+                st.rerun()

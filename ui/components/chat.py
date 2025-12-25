@@ -184,25 +184,3 @@ def add_message(role: str, content: str) -> None:
         "role": role,
         "content": content,
     })
-
-
-def add_grading_update(step: str, details: str = "") -> None:
-    """Add a grading progress update message.
-    
-    Args:
-        step: Current grading step
-        details: Optional details about the step
-    """
-    step_messages = {
-        "validating": "🔍 Validating rubric structure...",
-        "grading": "📊 Grading submission against criteria...",
-        "aggregating": "🧮 Aggregating scores...",
-        "feedback": "💬 Generating feedback...",
-        "complete": "✅ Grading complete!",
-    }
-    
-    message = step_messages.get(step, f"Processing: {step}")
-    if details:
-        message += f"\n{details}"
-    
-    add_message("assistant", message)

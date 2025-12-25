@@ -33,6 +33,11 @@ def _base_state(st_module):
         requested_tool_confirmations={"call1": {"hint": "confirm"}},
         last_invocation_id="inv1",
         approval_decision=None,
+        approval_followup={"stage": "choose_action"},
+        regrade_comment="please regrade",
+        manual_final_score=None,
+        manual_letter_grade=None,
+        manual_feedback=None,
         grading_in_progress=True,
         current_step="approval",
     )
@@ -63,6 +68,8 @@ def test_run_grading_manual_adjust_finalizes_immediately(monkeypatch):
     assert st.session_state.current_step == "complete"
     assert st.session_state.pending_approval is False
     assert st.session_state.approval_decision is None
+    assert st.session_state.approval_followup is None
+    assert st.session_state.regrade_comment == ""
     assert st.session_state.final_score["total_score"] == 7.0
     assert st.session_state.final_score["letter_grade"] == "B"
     assert st.session_state.feedback["overall_summary"] == "Manual feedback text"
@@ -99,3 +106,5 @@ def test_run_grading_regrade_resets_state_and_restarts(monkeypatch):
     assert st.session_state.final_score is None
     assert st.session_state.feedback is None
     assert st.session_state.grading_session_id is None
+    assert st.session_state.approval_followup is None
+    assert st.session_state.regrade_comment == ""

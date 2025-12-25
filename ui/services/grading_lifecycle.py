@@ -30,9 +30,12 @@ def reset_grading_state() -> None:
     # Results and flags
     st.session_state.grading_in_progress = False
     st.session_state.final_score = None
-    st.session_state.grades = None
+    st.session_state.grades = {}
     st.session_state.feedback = None
-    st.session_state.current_step = None
+    st.session_state.current_step = "idle"
+    st.session_state.error_message = None
+    st.session_state.cancel_requested = False
+    st.session_state.grading_session_id = None
 
 def invalidate_runner() -> None:
     """Drop cached runner/app so a new one is created on next access.

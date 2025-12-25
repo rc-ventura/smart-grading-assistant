@@ -14,7 +14,7 @@ class MockToolContext:
         self.state = state
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_needs_approval_uses_requires_human_intervention_flag():
     ctx = MockToolContext(
         {
