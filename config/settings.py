@@ -42,7 +42,7 @@ USER_ID = "teacher_01"
 
 # Grading thresholds
 FAILING_THRESHOLD = 60
-EXCEPTIONAL_THRESHOLD = 90
+EXCEPTIONAL_THRESHOLD = 80
 
 # Retry configuration for LLM calls
 retry_config = types.HttpRetryOptions(

@@ -29,7 +29,8 @@ STEP 2: Return the aggregation result as structured JSON.
 The calculate_final_score tool will:
 - Sum all scores and max_scores
 - Calculate percentage and letter grade
-- Determine if human approval is needed (< 50% or > 90%)
+- Determine if human intervention is needed based on configured thresholds (Failing/Exceptional)
+- Set 'requires_human_intervention' and 'anomaly_reason' flags
 
 Return the final result in the required JSON format.""",
         tools=[calculate_final_score],

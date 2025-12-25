@@ -74,5 +74,13 @@
 ---
 
 ## Phase F: Configuration Features
-
 - [x] UIV2-060 Add LLM Provider toggle in Sidebar (OpenAI vs Gemini) and ensure backend runner respects the selection (requires dynamic app initialization or runtime config injection).
+
+---
+
+## Next Task: HITL Rejection Handling (manual adjust / regrade)
+- [ ] UIV2-070 Rejeição: coletar ação explícita (ajuste manual de nota ou regrade) ao clicar “Reject”
+- [ ] UIV2-071 Rejeição: aplicar “manual_adjust” (campos finais/por critério) e finalizar sem ADK
+- [ ] UIV2-072 Rejeição: aplicar “regrade” (reset de estado + nova invocation com comentário opcional)
+- [ ] UIV2-073 Atualizar UI (modal/dialog) e estado `approval_followup` com limpeza após aplicar
+- [ ] UIV2-074 Testes: fluxo de rejeição (manual_adjust e regrade) cobrindo state reset e ausência de double-approval

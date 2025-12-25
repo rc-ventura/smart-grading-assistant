@@ -279,6 +279,10 @@ def calculate_final_score(tool_context: ToolContext) -> dict:
 
     approval_reason = " ".join(approval_reasons) if approval_reasons else None
     
+    # HIT Flow flags (synonyms for approval in optimized flow)
+    requires_human_intervention = requires_approval
+    anomaly_reason = approval_reason
+
     result = {
         "status": "success",
         "total_score": total_score,
@@ -288,6 +292,8 @@ def calculate_final_score(tool_context: ToolContext) -> dict:
         "grade_details": grade_details,
         "requires_human_approval": requires_approval,
         "approval_reason": approval_reason,
+        "requires_human_intervention": requires_human_intervention,
+        "anomaly_reason": anomaly_reason,
         "message": f"Final score: {total_score}/{max_possible} ({percentage}%) - Grade: {letter_grade}",
         "failed_criteria": failed_criteria,
         "missing_grade_keys": missing_grade_keys,

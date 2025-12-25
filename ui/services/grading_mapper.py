@@ -102,11 +102,17 @@ def map_runner_event(raw_event: Any) -> dict[str, Any]:
                             "requires_human_approval"
                         )
                     st.session_state.final_score = aggregation
-                    if aggregation.get("requires_human_approval") or aggregation.get(
-                        "requires_approval"
-                    ):
+                    requires_approval = bool(
+                        aggregation.get("requires_human_approval")
+                        or aggregation.get("requires_approval")
+                        or aggregation.get("requires_human_intervention")
+                    )
+                    if requires_approval:
                         st.session_state.pending_approval = True
-                        st.session_state.approval_reason = aggregation.get("approval_reason")
+                        st.session_state.approval_reason = (
+                            aggregation.get("anomaly_reason")
+                            or aggregation.get("approval_reason")
+                        )
                     return {
                         "type": "step_complete",
                         "step": "aggregating",

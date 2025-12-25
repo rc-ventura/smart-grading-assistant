@@ -81,6 +81,10 @@ async def needs_approval(
             aggregation_result = None
 
         if isinstance(aggregation_result, dict):
+            # Optimized HIT Flow: Aggregator is the single source of truth.
+            if aggregation_result.get("requires_human_intervention") is True:
+                return True
+
             if aggregation_result.get("requires_human_approval") is True:
                 return True
 
